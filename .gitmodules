@@ -1,0 +1,3 @@
+[submodule "stoomboot"]
+	path = stoomboot
+	url = https://github.com/cjsmeele/stoomboot.git
