@@ -1,0 +1,4 @@
+#+TITLE:  Het BesturingsSysteem
+#+AUTHOR: Chris Smeele
+
+Ik maak een OS omdat ik dat leuk vind.
