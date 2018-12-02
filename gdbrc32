@@ -1,0 +1,9 @@
+set disassembly-flavor intel
+target remote :1234
+file kernel/bin/i686/kernel.elf
+break *0x7c00
+continue
+layout split
+focus cmd
+
+echo \nHappy debugging!\n\n
