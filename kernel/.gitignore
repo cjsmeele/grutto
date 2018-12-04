@@ -1,0 +1,4 @@
+/dep
+/bin
+/obj
+*.pch
