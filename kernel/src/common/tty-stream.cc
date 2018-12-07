@@ -51,6 +51,8 @@ void TtyStream::init_after_mem_init() {
         }
     } else {
         // Keep using text mode.
+
+        tty_text.init_after_mem_init();
     }
 }
 

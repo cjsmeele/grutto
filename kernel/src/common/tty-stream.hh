@@ -21,11 +21,11 @@
 
 class TtyTextOutput : public OStream {
 
-    static constexpr addr_t fb_addr = 0xb8000;
+    static constexpr addr_t pa_fb = 0xb8000;
     static constexpr u32    width   = 80;
     static constexpr u32    height  = 25;
 
-    volatile u16 *fb = (u16*)fb_addr;
+    volatile u16 *fb = (u16*)pa_fb;
 
     u8 fbx = 0;
     u8 fby = 0;
@@ -36,6 +36,7 @@ public:
     void put_char(char c);
     void put_string(const char *s);
 
+    void init_after_mem_init();
     void init();
 };
 

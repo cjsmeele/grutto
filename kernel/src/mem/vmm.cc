@@ -45,9 +45,6 @@ namespace Vmm {
     pte_t make_pde_pt(addr_t pt_pn) { return pt_pn << 12 | 3; }
     pte_t make_pte(addr_t pn)       { return    pn << 12 | 3; }
 
-    // 4M-aligned va of the kernel's page tables.
-    constexpr addr_t kernel_pts = 1022 << 22;
-
     // 4M-aligned pa of the kernel's page tables (to be allocated).
     addr_t kernel_pt_phy = 0;
 
@@ -55,7 +52,7 @@ namespace Vmm {
         // Obtain page table entry for the given virtual address.
         u32 ptn  = vn >> 10;   // pde / page table number.
         u32 pten = vn & 0x3ff; // pte / page number.
-        pte_t *pt = (pte_t*)kernel_pts + ptn*1_K;
+        pte_t *pt = (pte_t*)va_kernel_pts + ptn*1_K;
         if (pd[ptn] & 1) { // pde present?
             assert((pd[ptn] & 0x80) == 0, "Cannot split up 4M mapping to get a PTE");
             // To handle above case, we should split the 4M mapping into 4K mappings.
@@ -113,7 +110,7 @@ namespace Vmm {
     }
 
     pte_t *get_pt(addr_t tn) {
-        return ((pte_t*)kernel_pts) + 1_K * tn;
+        return ((pte_t*)va_kernel_pts) + 1_K * tn;
     }
 
     void init() {
@@ -144,14 +141,14 @@ namespace Vmm {
         // Monkey-patch current page directory so we can address these WIP tables.
         // ~~ If it's hacky and you know it, clap your hands. 👏 👏 ~~
         { pde_t *old_dir = (pde_t*)asm_cr3();
-          old_dir[kernel_pts >> 22] = make_pde_4M(kernel_pt_phy);
+          old_dir[va_kernel_pts >> 22] = make_pde_4M(kernel_pt_phy);
         }
         // (we could instead have added 4M+alignment to .bss, but that stinks)
 
         // Insert them into the new page directory as well.
-        pd[kernel_pts >> 22] = make_pde_4M(kernel_pt_phy);
+        pd[va_kernel_pts >> 22] = make_pde_4M(kernel_pt_phy);
 
-        Mem::set((pte_t*)kernel_pts, (pde_t)0, 1_M);
+        Mem::set((pte_t*)va_kernel_pts, (pde_t)0, 1_M);
 
         // Map the kernel.
         { map_pages(kernel_vma() / granularity
@@ -160,9 +157,8 @@ namespace Vmm {
 
           // XXX: Kernel stack is located in bootstrap code.
           //      As such, the kernel_stack sym is a LMA, not a VMA (!)
-          // TODO: Get rid of magic numbers.
-          map_pages(0xffff1000 / granularity
-                   ,(addr_t)&kernel_stack / granularity
+          map_pages(va_kernel_stack           / granularity
+                   ,(addr_t)&kernel_stack     / granularity
                    ,div_ceil(kernel_stack_size, granularity));
         }
 

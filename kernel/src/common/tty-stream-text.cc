@@ -16,6 +16,8 @@
  * along with Grutto.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "tty-stream.hh"
+// XXX
+#include "../mem/vmm.hh"
 
 void TtyTextOutput::scroll(int n) {
     while (n > 0) {
@@ -48,6 +50,15 @@ void TtyTextOutput::put_char(char c) {
 void TtyTextOutput::put_string(const char *s) {
     while (*s)
         put_char(*(s++));
+}
+
+void TtyTextOutput::init_after_mem_init() {
+    // The first 1M is no longer identity-mapped, we need to remap it at the right spot.
+    Vmm::map_pages(Vmm::va_framebuffer    / Vmm::granularity,
+                   pa_fb                  / Vmm::granularity,
+                   div_ceil(width*height*2, Vmm::granularity));
+
+    fb = (u16*)Vmm::va_framebuffer;
 }
 
 void TtyTextOutput::init() {
