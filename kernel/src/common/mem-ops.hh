@@ -35,6 +35,7 @@ namespace Mem {
     [[deprecated]]
     void *kalloc0(size_t count);
 
+    [[nodiscard]] void *kmalloc(size_t size, size_t align);
     [[nodiscard]] void *kmalloc(size_t count);
     [[nodiscard]] void *kcalloc(size_t count);
     void  kfree(void *p);

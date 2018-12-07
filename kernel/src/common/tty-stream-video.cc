@@ -125,11 +125,11 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, void *framebuffer) {
         && (is_divisible((addr_t)fb, 4))) {
 
         // FIXME: Actually write something that allocates virtual memory.
-        Mem::Vmm::map_pages(0x400000         / Mem::Vmm::granularity,
-                            (u32)framebuffer / Mem::Vmm::granularity,
-                            div_ceil(w*h*bpp,  Mem::Vmm::granularity));
+        Vmm::map_pages(0xe0000000           / Vmm::granularity,
+                       (u32)framebuffer     / Vmm::granularity,
+                       div_ceil(w*h*(bpp/8),  Vmm::granularity));
 
-        fb     = (u32*)0x400000;
+        fb     = (u32*)0xe0000000;
 
         width  = w;
         height = h;

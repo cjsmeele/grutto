@@ -18,7 +18,7 @@
 #include "kmm.hh"
 #include "vmm.hh"
 
-namespace Mem::Kmm {
+namespace Kmm {
 
     addr_t heap_start = ::heap_start();
     size_t heap_size  = 0;
@@ -26,23 +26,23 @@ namespace Mem::Kmm {
     void *more_core(ptrdiff_t diff) {
         koi.fmt("sbrk, heap_sz {08x}, diff {}\n", heap_size, diff);
 
-        if (diff < 0) {
-            if ((size_t)-diff > heap_size)
-                diff = -heap_size;
-        } else if (diff > 0) {
-            if (heap_size % Mem::Vmm::granularity == 0) {
-                Mem::Vmm::alloc_at((heap_start+heap_size) >> 12,
-                                   div_ceil(diff, Mem::Vmm::granularity));
+        if (LIKELY(diff > 0)) {
+            if (is_divisible(heap_size, Vmm::granularity)) {
+                Vmm::alloc_at((heap_start+heap_size) / Vmm::granularity,
+                              div_ceil(diff, Vmm::granularity));
 
-                koi.fmt("alloced {} pages\n", div_ceil(diff, Mem::Vmm::granularity));
+                koi.fmt("alloced {} pages\n", div_ceil(diff, Vmm::granularity));
             } else {
-                size_t extra = (heap_size + diff) / Mem::Vmm::granularity
-                             - heap_size / Mem::Vmm::granularity;
+                size_t extra = (heap_size + diff) / Vmm::granularity
+                             - heap_size / Vmm::granularity;
 
-                Mem::Vmm::alloc_at(div_ceil(heap_start+heap_size, Mem::Vmm::granularity),
-                                   extra);
+                Vmm::alloc_at(div_ceil(heap_start+heap_size, Vmm::granularity),
+                              extra);
                 koi.fmt("alloced 1\n");
             }
+        } else if (diff < 0) {
+            if ((size_t)-diff > heap_size)
+                diff = -heap_size;
         }
 
         void *brk = (void*)(heap_start + heap_size);

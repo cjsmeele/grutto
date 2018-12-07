@@ -36,9 +36,9 @@ static void dump_frame(OStream &o, Int::interrupt_frame &frame) {
     fmtone("eax", frame.eax); fmtone("cs", frame.cs); fmtone("eip", frame.eip); o << '\n';
     fmtone("ebx", frame.ebx); fmtone("ss", frame.ss); fmtone("esp", frame.esp); o << '\n';
     fmtone("ecx", frame.ecx); fmtone("ds", frame.ds); fmtone("ebp", frame.ebp); o << '\n';
-    fmtone("edx", frame.edx); fmtone("es", frame.es); fmtone("cr0", asm_read_cr0()); o << '\n';
-    fmtone("esi", frame.esi); fmtone("fs", frame.fs); fmtone("cr2", asm_read_cr2()); o << '\n';
-    fmtone("edi", frame.edi); fmtone("gs", frame.gs); fmtone("cr3", asm_read_cr3()); o << '\n';
+    fmtone("edx", frame.edx); fmtone("es", frame.es); fmtone("cr0", asm_cr0()); o << '\n';
+    fmtone("esi", frame.esi); fmtone("fs", frame.fs); fmtone("cr2", asm_cr2()); o << '\n';
+    fmtone("edi", frame.edi); fmtone("gs", frame.gs); fmtone("cr3", asm_cr3()); o << '\n';
 }
 
 extern "C" {

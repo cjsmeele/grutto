@@ -18,7 +18,7 @@
 
 #define HAVE_MORECORE 1
 #define HAVE_MMAP 0
-#define MORECORE Mem::Kmm::more_core
+#define MORECORE Kmm::more_core
 #define ABORT panic()
 #define MALLOC_FAILURE_ACTION panic()
 #define USE_DL_PREFIX

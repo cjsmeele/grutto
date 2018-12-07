@@ -205,6 +205,12 @@ template<typename N> constexpr N set_rbits(N x, u8 i, u8 count, bool val = true)
     return set_bits(x, sizeof(N)*8-i-count, count, val);
 }
 
+template<typename N, typename M> constexpr N is_aligned(N x, M alignment) {
+    return x % alignment == 0;
+}
+template<typename N, typename M> constexpr N is_aligned(N *x, M alignment) {
+    return (addr_t)x % alignment == 0;
+}
 template<typename N, typename M> constexpr N align_down(N x, M alignment) {
     auto rest = x % alignment;
     if (rest) return x - rest;

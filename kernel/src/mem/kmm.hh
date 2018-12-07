@@ -19,7 +19,7 @@
 
 #include "common.hh"
 
-namespace Mem::Kmm {
+namespace Kmm {
 
     void *more_core(ptrdiff_t);
 

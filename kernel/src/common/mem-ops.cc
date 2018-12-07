@@ -22,6 +22,7 @@ extern "C" {
     void dlfree(void*);
     [[nodiscard]] void *dlcalloc(size_t count, size_t size);
     [[nodiscard]] void *dlmalloc(size_t size);
+    [[nodiscard]] void* dlmemalign(size_t align, size_t size);
 }
 
 namespace Mem {
@@ -41,6 +42,8 @@ namespace Mem {
         set((u8*)addr, (u8)0x7f, size);
         return (void*)addr;
     }
+
+    void *kmalloc(size_t size, size_t align) { return dlmemalign(align, size); }
 
     void *kmalloc(size_t size) { return dlmalloc(size); }
     void *kcalloc(size_t size) { return dlcalloc(size, 1); }

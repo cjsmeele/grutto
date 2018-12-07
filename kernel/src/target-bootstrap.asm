@@ -160,8 +160,9 @@ bootstrap_target_boot:
     call setup_paging
 
     ;; Set up stack at the virtual address we mapped for it just now.
-    mov esp, 0xffff0000 + KERNEL_STACK_SIZE
-    ;; ffff4000
+    ;; We leave a single unmapped page below it, which should help catch stack overflows.
+    mov esp, 0xffff1000 + KERNEL_STACK_SIZE
+    ;; ffff5000
 
     call call_constructors
 
@@ -237,13 +238,13 @@ setup_paging:
     ;; Insert 16K of PTEs (4) into PT 1023.
     ;; This maps the kernel stack from VMA 0xffff.0000 to LMA kernel_stack.
     mov edi, page_table_1023
-    mov ebx, 1008               ; -> 0xffff.0000
+    mov ebx, 1009               ; -> 0xffff.1000
     mov eax, kernel_stack
 .loop2:
     call set_pte
     inc ebx
     add eax, 0x1000
-    cmp ebx, 1012               ; -> 0xffff.4000
+    cmp ebx, 1013               ; -> 0xffff.5000
     jl .loop2
 
     ;; Load page directory.

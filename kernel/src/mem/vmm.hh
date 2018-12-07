@@ -20,18 +20,19 @@
 #include "common.hh"
 #include "pmm.hh"
 
-namespace Mem::Vmm {
+namespace Vmm {
 
     constexpr auto granularity = Mem::Pmm::granularity;
     constexpr auto page_size   = 4_K;
     static_assert(page_size == granularity);
 
-    constexpr auto pt_size          = 4_M;
+    constexpr bool is_page_aligned(addr_t va) { return is_aligned(va, granularity); }
 
+    constexpr auto pt_size           =  4_M;
     constexpr auto kernel_stack_size = 16_K;
 
-    constexpr addr_t kernel_pts = 0xf0000000;
-
+    addr_t kva_to_pa(addr_t va);
+    addr_t kva_to_pa(void *va);
 
     void map_page (addr_t vn, addr_t pn);
     void map_pages(addr_t vn, addr_t pn, size_t count);

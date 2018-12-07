@@ -37,9 +37,12 @@ static void main() {
     Pit::init();
     Int::Pic::init();
 
+    // Reinitialize GDT using high-half table.
+    Gdt::init();
+
     // Initialize memory management.
     Mem::Pmm::init();
-    Mem::Vmm::init();
+    Vmm::init();
 
     // Enable interrupts.
     Int::sti();
@@ -60,6 +63,15 @@ static void main() {
 
     koi.fmt("\nmemory: {S} available\n\n", Mem::Pmm::mem_available());
 
+    //RESDECLT_(hoofd, hoofd, u8);
+    //u8 *buf = hoofd;
+    //assert(is_aligned(buf, Vmm::granularity), "head not aligned");
+    //auto tgt = Vmm::va_to_klma(buf);
+    //Vmm::map_pages(1_M>>12, tgt>>12, div_ceil(hoofd_size, Vmm::granularity));
+    //auto fn = (int(*)())(u8*)1_M;
+    //auto zzz = fn();
+    //koi.fmt("result: {}\n", zzz);
+
     auto start_time = uptime();
     for (u64 i = 0;; ++i) {
         const char *x = "/-\\|";
@@ -67,7 +79,7 @@ static void main() {
                 time_s(uptime()),
                 time_ms(uptime())/10 % 100,
                 x[i/5%4]);
-        ksleep(10_ms);
+        ksleep(50_ms);
         if (uptime() - start_time > 10_s) trap(0xe0fe0f88);
     }
 }

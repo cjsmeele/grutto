@@ -17,15 +17,20 @@
  */
 #pragma once
 
-#define asm_hlt()  asm volatile ("hlt")
-#define asm_cli()  asm volatile ("cli")
-#define asm_sti()  asm volatile ("sti")
-#define asm_nop()  asm volatile ("nop")
+#define asm_hlt()   asm volatile ("hlt")
+#define asm_cli()   asm volatile ("cli")
+#define asm_sti()   asm volatile ("sti")
+#define asm_nop()   asm volatile ("nop")
+#define asm_magic() asm volatile ("xchgw %bx, %bx")
 
-#define asm_read_esp() ([](){ u32 x; asm volatile ("mov %%esp, %0": "=a"(x)); return x; })()
-#define asm_read_cr0() ([](){ u32 x; asm volatile ("mov %%cr0, %0": "=a"(x)); return x; })()
-#define asm_read_cr2() ([](){ u32 x; asm volatile ("mov %%cr2, %0": "=a"(x)); return x; })()
-#define asm_read_cr3() ([](){ u32 x; asm volatile ("mov %%cr3, %0": "=a"(x)); return x; })()
+inline u32  asm_esp() { u32 x; asm volatile ("mov %%esp, %0": "=a"(x)); return x; }
+inline u32  asm_cr0() { u32 x; asm volatile ("mov %%cr0, %0": "=a"(x)); return x; }
+inline u32  asm_cr2() { u32 x; asm volatile ("mov %%cr2, %0": "=a"(x)); return x; }
+inline u32  asm_cr3() { u32 x; asm volatile ("mov %%cr3, %0": "=a"(x)); return x; }
+inline u32  asm_cr4() { u32 x; asm volatile ("mov %%cr4, %0": "=a"(x)); return x; }
+
+inline void asm_cr3(u32 x) {   asm volatile ("mov %0, %%cr3" :: "b" (x)); }
+inline void asm_cr4(u32 x) {   asm volatile ("mov %0, %%cr4" :: "b" (x)); }
 
 [[noreturn]]
 inline void hang() { while (true) { asm_cli(); asm_hlt(); } }

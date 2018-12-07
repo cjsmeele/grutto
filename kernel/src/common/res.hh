@@ -20,10 +20,10 @@
 // FIXME: I don't think we have any guarantees concerning alignment here!
 
 #define RESDECLT_(name, alias, t) \
-extern const size_t _binary_res_##name##_bin_size; \
-extern       t      _binary_res_##name##_bin_start[]; \
-             size_t alias##_size[[maybe_unused]] = _binary_res_##name##_bin_size; \
-             t     *alias       [[maybe_unused]] = _binary_res_##name##_bin_start;
+extern const unusable_t _binary_res_##name##_bin_size; \
+extern       t          _binary_res_##name##_bin_start[]; \
+             size_t     alias##_size[[maybe_unused]] = (size_t)&_binary_res_##name##_bin_size; \
+             t         *alias       [[maybe_unused]] = _binary_res_##name##_bin_start;
 
 #define RESDECLT(name, t) RESDECLT_(name, name, t)
 
