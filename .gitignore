@@ -1,7 +1,6 @@
 *~*
 *\#*
-*.elf
 *.a
 *.o
-*.bin
 *.swp
+/bx_enh_dbg.ini

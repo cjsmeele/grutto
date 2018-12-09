@@ -88,8 +88,13 @@ DISK_BOOTDIR ?= boot
 
 LOADER_RCFILE ?= ./loader.rc
 
-STAGE1_MBR_BIN ?= stoomboot/stage1/bin/stoomboot-stage1-mbr.bin
-STAGE2_BIN     ?= stoomboot/stage2/bin/stoomboot-stage2.bin
+STAGE1_MBR_BIN ?= stoomboot-stage1-mbr.bin
+STAGE2_BIN     ?= stoomboot-stage2.bin
+
+# If you uncomment these lines, we will automatically build stoomboot and use a
+# newly built stage1&2.
+#STAGE1_MBR_BIN := stoomboot/stage1/bin/stoomboot-stage1-mbr.bin
+#STAGE2_BIN     := stoomboot/stage2/bin/stoomboot-stage2.bin
 
 #QEMU    ?= qemu-system-i386
 QEMU    ?= qemu-system-x86_64
@@ -146,15 +151,15 @@ $(DISK_FILE): $(STAGE1_MBR_BIN) $(STAGE2_BIN) $(BINFILE) $(LOADER_RCFILE)
 	mcopy   -i $(DISK_FS) -s $(DISK_DIR)/* ::/
 	stoomboot/tools/loader-install.pl \
 	    --mbr \
-	    --stage1-mbr   stoomboot/stage1/bin/stoomboot-stage1-mbr.bin \
-	    --stage2       stoomboot/stage2/bin/stoomboot-stage2.bin \
+	    --stage1-mbr   $(STAGE1_MBR_BIN) \
+	    --stage2       $(STAGE2_BIN) \
 	    --stage2-lba   1 \
 	    --loader-fs-id $(DISK_FSID) \
 	    --img          $(DISK_FILE)
 
-$(STAGE1_MBR_BIN):
+stoomboot/stage1/bin/stoomboot-stage1-mbr.bin:
 	$(MAKE) -C stoomboot stage1-mbr-bin
-$(STAGE2_BIN):
+stoomboot/stage2/bin/stoomboot-stage2.bin:
 	$(MAKE) -C stoomboot stage2-bin
 
 # }}}
