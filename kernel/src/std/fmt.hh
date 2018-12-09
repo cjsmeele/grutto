@@ -60,8 +60,7 @@ constexpr void fmt2(F fn, Fmtflags &f, const char *a) {
     if (!f.align_left && pad > 0)
         fmtpad(fn, ' ', pad);
 
-    while (*a)
-        fn(*a++);
+    fn(a);
 
     if (f.align_left && pad > 0)
         fmtpad(fn, ' ', pad);
@@ -161,9 +160,8 @@ constexpr void fmt2(F fn, Fmtflags &f, u64 n, bool sign = false) {
 template<typename F>
 constexpr void fmt2(F fn, Fmtflags &f, s64 n) {
     if (n >= 0)
-        fmt2(fn, f, (u64)n);
-    else
-        fmt2(fn, f, (u64)-n, !f.unsign);
+         fmt2(fn, f, (u64) n);
+    else fmt2(fn, f, (u64)-n, !f.unsign);
 }
 
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f,  s8 n) { fmt2(fn, f, (s64)n); }
@@ -257,8 +255,6 @@ constexpr void fmt(F fn, const char *s, const As&... as) {
     if constexpr (sizeof...(As) > 0) {
         fmt1(fn, s, as...);
     } else {
-        while (*s)
-            fn(*(s++));
+        fn(s);
     }
 }
-

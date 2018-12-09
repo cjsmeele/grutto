@@ -20,16 +20,25 @@
 #include "std/types.hh"
 #include "std/fmt.hh"
 
+class OStream;
+
+
 class OStream {
+
+    struct FmtCallback {
+        OStream &os;
+        void operator()(char c)        { os.put_char(c);   }
+        void operator()(const char *s) { os.put_string(s); }
+    };
+
 public:
     virtual void put_char(char c) = 0;
     virtual void put_string(const char *c);
 
     template<typename... As>
     void fmt(const char *s, const As&... as) {
-        ::fmt([this](auto c) { put_char(c); }, s, as...);
+        ::fmt(FmtCallback{*this}, s, as...);
     }
-
 };
 
 class IStream {
@@ -50,16 +59,16 @@ public:
 extern DummyStream stream_dummy;
 
 
-OStream &operator<<(OStream &io, char c);
-OStream &operator<<(OStream &io, const char *s);
+[[deprecated]] OStream &operator<<(OStream &io, char c);
+[[deprecated]] OStream &operator<<(OStream &io, const char *s);
 
-OStream &operator<<(OStream &io, u64 n);
-OStream &operator<<(OStream &io, s64 n);
-OStream &operator<<(OStream &io, u32 n);
-OStream &operator<<(OStream &io, s32 n);
-OStream &operator<<(OStream &io, u16 n);
-OStream &operator<<(OStream &io, u16 n);
-OStream &operator<<(OStream &io, const void *ptr);
+[[deprecated]] OStream &operator<<(OStream &io, u64 n);
+[[deprecated]] OStream &operator<<(OStream &io, s64 n);
+[[deprecated]] OStream &operator<<(OStream &io, u32 n);
+[[deprecated]] OStream &operator<<(OStream &io, s32 n);
+[[deprecated]] OStream &operator<<(OStream &io, u16 n);
+[[deprecated]] OStream &operator<<(OStream &io, s16 n);
+[[deprecated]] OStream &operator<<(OStream &io, const void *ptr);
 
-IStream &operator>>(IStream &io, char &c);
+[[deprecated]] IStream &operator>>(IStream &io, char &c);
 

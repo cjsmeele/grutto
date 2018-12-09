@@ -33,12 +33,12 @@ static void dump_frame(OStream &o, Int::interrupt_frame &frame) {
         o.fmt("{-3} {08x}  ", name, v);
     };
 
-    fmtone("eax", frame.eax); fmtone("cs", frame.cs); fmtone("eip", frame.eip); o << '\n';
-    fmtone("ebx", frame.ebx); fmtone("ss", frame.ss); fmtone("esp", frame.esp); o << '\n';
-    fmtone("ecx", frame.ecx); fmtone("ds", frame.ds); fmtone("ebp", frame.ebp); o << '\n';
-    fmtone("edx", frame.edx); fmtone("es", frame.es); fmtone("cr0", asm_cr0()); o << '\n';
-    fmtone("esi", frame.esi); fmtone("fs", frame.fs); fmtone("cr2", asm_cr2()); o << '\n';
-    fmtone("edi", frame.edi); fmtone("gs", frame.gs); fmtone("cr3", asm_cr3()); o << '\n';
+    fmtone("eax", frame.eax); fmtone("cs", frame.cs); fmtone("eip", frame.eip); o.put_char('\n');
+    fmtone("ebx", frame.ebx); fmtone("ss", frame.ss); fmtone("esp", frame.esp); o.put_char('\n');
+    fmtone("ecx", frame.ecx); fmtone("ds", frame.ds); fmtone("ebp", frame.ebp); o.put_char('\n');
+    fmtone("edx", frame.edx); fmtone("es", frame.es); fmtone("cr0", asm_cr0()); o.put_char('\n');
+    fmtone("esi", frame.esi); fmtone("fs", frame.fs); fmtone("cr2", asm_cr2()); o.put_char('\n');
+    fmtone("edi", frame.edi); fmtone("gs", frame.gs); fmtone("cr3", asm_cr3()); o.put_char('\n');
 }
 
 extern "C" {

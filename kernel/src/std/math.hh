@@ -126,53 +126,6 @@ constexpr u8 trailing_1s(N x) {
     return trailing_0s(static_cast<N>(~x));
 }
 
-
-/*
-    auto tst1 = [](auto n) {
-        koi.fmt("u{-2d} {064b}, 1s {2d} 0s {2d} lead0 {2d} trail0 {2d} lead1 {2d} trail1 {2d}\n"
-                , sizeof(n)*8
-                ,n
-                ,count_1s(n)
-                ,count_0s(n)
-                ,leading_0s(n)
-                ,trailing_0s(n)
-                ,leading_1s(n)
-                ,trailing_1s(n)
-                );
-    };
-    auto tst2 = [](auto n) { koi.fmt("{064b}, 0s {2d}\n", n, popcount(n)); };
-
-    tst1(u32 {0});
-    tst1(u32 {1});
-    tst1(u32 {0x8000});
-    tst1(u32 {0x80000000});
-    tst1(u32 {0xfffeffff});
-    tst1(u32 {0xffffffff});
-    tst1(u16 {0xffff});
-    tst1(u16 {0xfeff});
-    tst1(u16 {0x0000});
-    tst1(u64 {0xffffffff});
-    tst1(u64 {0xf0ffffffff});
-    tst1(u64 {0xf00000ff'ffffffff});
-    tst1(u64 {0xf0000100'00000000});
-    tst1(u64 {0x00000000'00000010});
-    tst1(u8  {0x0f});
-    tst1(u8  {0xf0});
-    */
-
-//constexpr u8 trailing_0s(N x) { return      __builtin_ctz( x); }
-
-//constexpr auto count_0s(u16 x)    { return      __builtin_popcount((u16)~x); }
-//constexpr auto count_1s(u16 x)    { return      __builtin_popcount( x); }
-//constexpr auto leading_0s (u16 x) { return      __builtin_clz( x) - 16; }
-//constexpr auto trailing_0s(u16 x) { return      __builtin_ctz( x); }
-//constexpr auto count_0s(u32 x)    { return      __builtin_popcount((u32)~x); }
-//constexpr auto count_1s(u32 x)    { return      __builtin_popcount( x); }
-//constexpr auto leading_0s (u32 x) { return      __builtin_clz( x) - 16; }
-//constexpr auto trailing_0s(u32 x) { return      __builtin_ctz( x); }
-//auto leading_1s (u16 x) { return __builtin_clz(~x); }
-//auto trailing_1s(u16 x) { return __builtin_ctz(~x); }
-
 template<typename N> constexpr bool is_even(N x) { return (x & 1) == 0; }
 template<typename N> constexpr bool is_odd (N x) { return (x & 1) == 1; }
 template<typename N, typename M>

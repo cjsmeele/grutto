@@ -25,7 +25,7 @@ inline void dink(char c = '#', u8 attr = 0x0a) {
 
 inline void do_assert(bool assertion, const char *err = "WAAAAGH!") {
     if (UNLIKELY(!assertion)) {
-        koi << "Assertion failed: " << err << "\n";
+        koi(LL::critical).fmt("Assertion failed: {}\n", err);
         panic();
     }
 }

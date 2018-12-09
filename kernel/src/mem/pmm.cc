@@ -117,7 +117,7 @@ namespace Pmm {
                 } else if (!usable) {
                     koi(LL::debug).fmt(" (unusable)");
                 }
-                koi(LL::debug) << "\n";
+                koi(LL::debug).put_char('\n');
 
                 if (usable)
                     regions.push(region_t{ (addr_t)addr, (size_t)usable });
@@ -140,7 +140,7 @@ namespace Pmm {
             koi.fmt("{08x}: ", i*bmp.bits_per_entry*page_size);
             for (size_t j = 0; j < 8; ++j)
                 koi.fmt("{08x}", bmp.entries[i+j]);
-            koi << '\n';
+            koi.put_char('\n');
         }
         koi.fmt("bootstrap lma: {08x}\n",    bootstrap_lma());
         koi.fmt("kernel lma:    {08x}\n",    kernel_lma());

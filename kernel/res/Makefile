@@ -22,6 +22,9 @@ all: font.bin grutto_small.bin
 #banner.bin: banner.txt
 #	printf "\x00" | cat $< - > $@
 
+#font-grid.pbm: font-grid.png
+#	convert $< $@
+
 font.bin: font-grid.pbm
 	mkdir -p tmp
 	convert $< -crop 8x16 +repage tmp/char%02x.pbm
