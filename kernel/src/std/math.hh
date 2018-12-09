@@ -205,26 +205,13 @@ template<typename N> constexpr N set_rbits(N x, u8 i, u8 count, bool val = true)
     return set_bits(x, sizeof(N)*8-i-count, count, val);
 }
 
-template<typename N, typename M> constexpr N is_aligned(N x, M alignment) {
-    return x % alignment == 0;
+template<typename N, typename M> constexpr N div_ceil(N x, M y) {
+    auto rest = x % y;
+    if (rest) return x / y + 1;
+    else      return x / y;
 }
-template<typename N, typename M> constexpr N is_aligned(N *x, M alignment) {
-    return (addr_t)x % alignment == 0;
-}
-template<typename N, typename M> constexpr N align_down(N x, M alignment) {
-    auto rest = x % alignment;
-    if (rest) return x - rest;
-    else      return x;
-}
-template<typename N, typename M> constexpr N align_up(N x, M alignment) {
-    auto rest = x % alignment;
-    if (rest) return x + (alignment - rest);
-    else      return x;
-}
-template<typename N, typename M> constexpr N div_ceil(N x, M alignment) {
-    auto rest = x % alignment;
-    if (rest) return x / alignment + 1;
-    else      return x / alignment;
+template<typename N, typename M> constexpr N div_floor(N x, M y) {
+    return x / y;
 }
 
 

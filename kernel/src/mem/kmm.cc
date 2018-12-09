@@ -27,25 +27,26 @@ namespace Kmm {
         koi.fmt("sbrk, heap_sz {08x}, diff {}\n", heap_size, diff);
 
         if (LIKELY(diff > 0)) {
-            if (is_divisible(heap_size, Vmm::granularity)) {
-                Vmm::alloc_at((heap_start+heap_size) / Vmm::granularity,
-                              div_ceil(diff, Vmm::granularity));
+            if (is_divisible(heap_size, Vmm::page_size)) {
+                Vmm::alloc_at(heap_start.offset(heap_size),
+                              div_ceil(diff, Vmm::page_size));
 
-                koi.fmt("alloced {} pages\n", div_ceil(diff, Vmm::granularity));
+                //koi.fmt("alloced {} pages\n", div_ceil(diff, Vmm::page_size));
             } else {
-                size_t extra = (heap_size + diff) / Vmm::granularity
-                             - heap_size / Vmm::granularity;
+                size_t extra = (heap_size + diff) / Vmm::page_size
+                             - heap_size / Vmm::page_size;
 
-                Vmm::alloc_at(div_ceil(heap_start+heap_size, Vmm::granularity),
-                              extra);
-                koi.fmt("alloced 1\n");
+                Vmm::alloc_at(heap_start.offset(heap_size)
+                                        .align_up(Vmm::page_size)
+                             ,extra);
+                //koi.fmt("alloced 1\n");
             }
         } else if (diff < 0) {
             if ((size_t)-diff > heap_size)
                 diff = -heap_size;
         }
 
-        void *brk = (void*)(heap_start + heap_size);
+        void *brk = heap_start.offset(heap_size);
         heap_size += diff;
 
         return brk;

@@ -20,8 +20,8 @@
 
 extern "C" {
     void dlfree(void*);
-    [[nodiscard]] void *dlcalloc(size_t count, size_t size);
-    [[nodiscard]] void *dlmalloc(size_t size);
+    [[nodiscard]] void *dlcalloc  (size_t count, size_t size);
+    [[nodiscard]] void *dlmalloc  (size_t size);
     [[nodiscard]] void* dlmemalign(size_t align, size_t size);
 }
 
@@ -29,18 +29,6 @@ namespace Mem {
 
     void kfree(void *p) {
         dlfree(p);
-    }
-
-    void *kalloc0(size_t size) {
-        static addr_t a = (addr_t)KERNEL_END;
-        auto alignment = alignof(max_align_t);
-        if (a & (alignment-1)) {
-            a += alignment - (a & (alignment-1));
-        }
-        auto addr = a;
-        a += size;
-        set((u8*)addr, (u8)0x7f, size);
-        return (void*)addr;
     }
 
     void *kmalloc(size_t size, size_t align) { return dlmemalign(align, size); }

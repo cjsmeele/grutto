@@ -40,11 +40,11 @@ namespace Int::Pic {
                                  u16 sel,
                                  u8  dpl,
                                  u8  type) {
-        return (((u64)(offset >> 16) << 48)
-                | ((u64)(present) << 47)
-                | ((u64)(dpl  & 0x3) << 45)
-                | ((u64)(type & 0xf) << 40)
-                | ((u64)(sel  & 0xffff) << 16)
+        return (  ((u64)(offset >> 16)    << 48)
+                | ((u64)(present)         << 47)
+                | ((u64)(dpl    & 0x3)    << 45)
+                | ((u64)(type   & 0xf)    << 40)
+                | ((u64)(sel    & 0xffff) << 16)
                 | ((u64)(offset & 0xffff)));
     }
 

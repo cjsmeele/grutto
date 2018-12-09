@@ -41,6 +41,8 @@ template<>           struct is_float<long double> { static constexpr bool value 
 template<typename T> struct is_signed   { static constexpr bool value = static_cast<T>(-1) < static_cast<T>(0); };
 template<typename T> struct is_unsigned { static constexpr bool value = !is_signed<T>::value; };
 
+//template<>           struct is_signed<addr_t>   { static constexpr bool value = false; };
+
 template<typename T1, typename T2> struct is_same         { static constexpr bool value = false; };
 template<typename T1>              struct is_same<T1, T1> { static constexpr bool value = true;  };
 
@@ -74,3 +76,4 @@ struct intmax {
     constexpr static size_t value = is_signed<T>::value
         ? ~T(1 << (sizeof(T)*8-1)) : static_cast<T>(-1);
 };
+template<> struct intmax<addr_t> { constexpr static size_t value = intmax<addr_t::type>::value; };

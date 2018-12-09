@@ -96,12 +96,14 @@ constexpr void fmt2(F fn, Fmtflags &f, u64 n, bool sign = false) {
         f.radix     = 10;
         prefix_len +=  2; // not actually a prefix, but who cares.
         if (scale == 0)
-            scale = min((int)log10(n) / 3, (int)4);
+            scale = min((int)log10(n) / 3, (int)6);
         if (scale == 0) size_char = 'B';
         if (scale == 1) size_char = 'K';
         if (scale == 2) size_char = 'M';
         if (scale == 3) size_char = 'G';
         if (scale == 4) size_char = 'T';
+        if (scale == 5) size_char = 'P';
+        if (scale == 6) size_char = 'E';
         n /= pow((u32)10, (u32)(scale*3));
     }
 
@@ -172,7 +174,7 @@ template<typename F> constexpr void fmt2(F fn, Fmtflags &f, u16 n) { fmt2(fn, f,
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, u32 n) { fmt2(fn, f, (u64)n); }
 
 template<typename F>
-constexpr void fmt2(F fn, Fmtflags &f, void *a) {
+constexpr void fmt2(F fn, Fmtflags &f, addr_t a) {
     f.radix        = 16;
     f.prefix_zero  = true;
     f.unsign       = true;
@@ -183,7 +185,11 @@ constexpr void fmt2(F fn, Fmtflags &f, void *a) {
 
     if (f.prefix_radix) f.width += 2;
 
-    fmt2(fn, f, (u64)a);
+    fmt2(fn, f, u64{a.u()});
+}
+template<typename F, typename T>
+constexpr void fmt2(F fn, Fmtflags &f, const T *a) {
+    fmt2(fn, f, addr_t{a});
 }
 
 template<typename F, typename... As>

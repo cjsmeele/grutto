@@ -119,18 +119,18 @@ void TtyVideoOutput::load_font(u8 *f, u32 fw, u32 fh) {
     ch = fh;
 }
 
-void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, void *framebuffer) {
+void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, addr_t pa_framebuffer) {
     if (bpp == 32
         && pitch == w*4
-        && (is_divisible((addr_t)fb, 4))) {
+        && (pa_framebuffer.is_aligned(4))) {
 
         // XXX
         assert(w*h*(bpp/8) < Vmm::va_framebuffer_max_size, "framebuffer too large");
 
         // FIXME: Actually write something that allocates virtual memory.
-        Vmm::map_pages(Vmm::va_framebuffer  / Vmm::granularity,
-                       (u32)framebuffer     / Vmm::granularity,
-                       div_ceil(w*h*(bpp/8),  Vmm::granularity));
+        Vmm::map_pages(Vmm::va_framebuffer
+                      ,pa_framebuffer
+                      ,div_ceil(w*h*(bpp/8), Vmm::page_size));
 
         fb = (u32*)Vmm::va_framebuffer;
 

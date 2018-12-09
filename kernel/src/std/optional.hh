@@ -29,7 +29,8 @@ class Optional {
     T *ptr() const { return (T*)buf; }
 
 public:
-    operator bool () const { return tag; }
+    constexpr explicit operator bool   () const { return tag; }
+    constexpr                   bool ok() const { return tag; }
     T &operator*()   const { return *ptr(); }
 
     T &operator=(const T &x) {

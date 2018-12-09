@@ -41,7 +41,7 @@ static void main() {
     Gdt::init();
 
     // Initialize memory management.
-    Mem::Pmm::init();
+    Pmm::init();
     Vmm::init();
 
     // Enable interrupts.
@@ -61,7 +61,7 @@ static void main() {
     if (Multiboot::cmdline())
         koi(LL::notice).fmt("{-20} {}\n", "kernel commandline:", Multiboot::cmdline());
 
-    koi.fmt("\nmemory: {S} available\n\n", Mem::Pmm::mem_available());
+    koi.fmt("\nmemory: {S} available\n\n", Pmm::mem_available());
 
     //RESDECLT_(hoofd, hoofd, u8);
     //u8 *buf = hoofd;

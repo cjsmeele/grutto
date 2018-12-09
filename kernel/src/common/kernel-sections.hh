@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "std/types.hh"
+
 extern unusable_t BOOTSTRAP_LMA;
 //extern unusable_t BOOTSTRAP_VMA; // == lma
 extern unusable_t KERNEL_LMA;
@@ -25,8 +27,8 @@ extern unusable_t KERNEL_SIZE;
 extern unusable_t HEAP_START;
 //extern unusable_t page_directory;
 
-inline addr_t bootstrap_lma() { return (addr_t)&BOOTSTRAP_LMA; }
-inline addr_t kernel_lma()    { return (addr_t)&KERNEL_LMA; }
-inline addr_t kernel_vma()    { return (addr_t)&KERNEL_VMA; }
+inline addr_t bootstrap_lma() { return addr_t {&BOOTSTRAP_LMA}; }
+inline addr_t kernel_lma()    { return addr_t {&KERNEL_LMA}; }
+inline addr_t kernel_vma()    { return addr_t {&KERNEL_VMA}; }
 inline size_t kernel_size()   { return (size_t)&KERNEL_SIZE; }
-inline addr_t heap_start()    { return (addr_t)&HEAP_START; }
+inline addr_t heap_start()    { return addr_t {&HEAP_START}; }

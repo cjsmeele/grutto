@@ -54,9 +54,9 @@ void TtyTextOutput::put_string(const char *s) {
 
 void TtyTextOutput::init_after_mem_init() {
     // The first 1M is no longer identity-mapped, we need to remap it at the right spot.
-    Vmm::map_pages(Vmm::va_framebuffer    / Vmm::granularity,
-                   pa_fb                  / Vmm::granularity,
-                   div_ceil(width*height*2, Vmm::granularity));
+    Vmm::map_pages(Vmm::va_framebuffer
+                  ,pa_fb
+                  ,div_ceil(width*height*2, Vmm::page_size));
 
     fb = (u16*)Vmm::va_framebuffer;
 }

@@ -19,7 +19,7 @@
 
 #include "multiboot-info.hh"
 
-namespace Mem::Pmm {
+namespace Pmm {
 
     Bitmap<bitmap_elems, 1> bmp;
 
@@ -36,24 +36,24 @@ namespace Mem::Pmm {
         return bmp.elem(elem);
     }
 
-    Optional<size_t> alloc(size_t count, size_t align) {
-         auto start = bmp.find_contiguous(div_ceil(lowest_usable_address, granularity)
+    Optional<page_t> alloc(size_t count, size_t align) {
+         auto start = bmp.find_contiguous(div_ceil(lowest_usable_address, page_size)
                                          ,count
                                          ,align);
          if (start)
              bmp.set_range(*start, count, true);
-         return start;
+         return page_t {*start};
     }
 
-    void free(size_t elem, size_t count) {
+    void free(page_t elem, size_t count) {
         // NB: This assumes the given range is actually allocated.
         //     Otherwise, counters will lose accuracy.
 
-        bmp.set_range(elem, count, false);
+        bmp.set_range(elem.u(), count, false);
     }
 
     size_t mem_available() {
-        return bmp.available * granularity;
+        return bmp.available * page_size;
     }
 
     void init() {
@@ -68,9 +68,9 @@ namespace Mem::Pmm {
 
         // These regions are assumed NOT to overlap.
         // Overlapping regions will break memory availability counters.
-        for (addr_t p = mbinfo.mmap_addr
-             ; p + 4 < mbinfo.mmap_addr + mbinfo.mmap_length
-             ; p += ((multiboot_mmap_entry*)p)->size + 4) {
+        for (auto p = addr_t{mbinfo.mmap_addr}
+             ; p.u() + 4 < mbinfo.mmap_addr + mbinfo.mmap_length
+             ; p = p.offset(((multiboot_mmap_entry*)p)->size + 4)) {
 
             auto *entry = (multiboot_mmap_entry*)p;
 
@@ -79,18 +79,17 @@ namespace Mem::Pmm {
 
             {
                 // Make sure the address is aligned.
-                auto x = align_up(addr, granularity);
+                auto x = div_ceil(addr, page_size) * page_size;
                 if (x != addr) {
                     if (x - addr >= len)
-                        len = 0; // Bogus.
-                    else
-                        len -= x - addr;
+                         len = 0; // Bogus.
+                    else len -= x - addr;
 
                     addr = x;
                 }
             }
 
-            len = align_down(len, granularity);
+            len -= len % page_size;
 
             if (entry->len) {
                 koi(LL::debug).fmt("  {016x} - {016x} type:{}, {6S}"
@@ -110,8 +109,8 @@ namespace Mem::Pmm {
                              : 0)
                            : 0;
 
-                bmp.set_range(addr   / granularity
-                             ,usable / granularity, false);
+                bmp.set_range(addr   / page_size
+                             ,usable / page_size, false);
 
                 if (usable && usable != len) {
                     koi(LL::debug).fmt(" of which {S} usable", usable);
@@ -126,26 +125,27 @@ namespace Mem::Pmm {
         }
 
         // Mark kernel sections as allocated.
-        bmp.set_range((addr_t)bootstrap_lma() / granularity
+        bmp.set_range(bootstrap_lma().u() / page_size
                       ,div_ceil(kernel_size()
-                                + ((addr_t)kernel_lma() - (addr_t)bootstrap_lma())
-                               , granularity)
+                                + (kernel_lma().u() - bootstrap_lma().u())
+                               , page_size)
                       ,true);
 
-        koi(LL::notice).fmt("total {S} usable memory\n", bmp.available * granularity);
+        koi(LL::notice).fmt("total {S} usable phy pages ({S})\n",
+                            bmp.available, bmp.available * page_size);
     }
 
     void dump_pmm() {
         for (size_t i = 0; i < bmp.size; i+=8) {
-            koi.fmt("{08x}: ", i*bmp.bits_per_entry*granularity);
+            koi.fmt("{08x}: ", i*bmp.bits_per_entry*page_size);
             for (size_t j = 0; j < 8; ++j)
                 koi.fmt("{08x}", bmp.entries[i+j]);
             koi << '\n';
         }
-        koi.fmt("bootstrap lma: {08x}\n", bootstrap_lma());
-        koi.fmt("kernel lma:    {08x}\n", kernel_lma());
-        koi.fmt("kernel vma:    {08x}\n", kernel_vma());
-        koi.fmt("kernel size:   { 8S}\n", kernel_size());
-        koi.fmt("total {S} usable memory\n", bmp.available * granularity);
+        koi.fmt("bootstrap lma: {08x}\n",    bootstrap_lma());
+        koi.fmt("kernel lma:    {08x}\n",    kernel_lma());
+        koi.fmt("kernel vma:    {08x}\n",    kernel_vma());
+        koi.fmt("kernel size:   { 8S}\n",    kernel_size());
+        koi.fmt("total {S} usable memory\n", bmp.available * page_size);
     }
 }

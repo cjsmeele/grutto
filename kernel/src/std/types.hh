@@ -27,8 +27,46 @@ using u64 = unsigned long long;
 using s64 =   signed long long;
 
 using size_t    = u32;
-using addr_t    = u32;
+//using addr_t    = u32;
 using ptrdiff_t = s32;
+
+// Address type.
+struct addr_t {
+    using type = size_t;
+private:
+    type x;
+public:
+    // Conversions.
+    template<typename T> inline operator  T*()  const { return (T*)x; }
+    constexpr   explicit inline operator type() const { return x; }
+    constexpr   explicit inline operator bool() const { return x != 0; }
+
+    [[nodiscard]] inline constexpr type u() const { return x; }
+
+    [[nodiscard]] inline constexpr addr_t offset(type y) const { return addr_t{x + y}; }
+
+    inline constexpr bool is_aligned(size_t alignment) const { return x % alignment == 0; }
+
+    [[nodiscard]] inline addr_t align_down(size_t alignment) { return addr_t {x - x % alignment}; }
+    [[nodiscard]] inline addr_t align_up  (size_t alignment) {
+        auto rest = x % alignment;
+        if (rest) return addr_t{x + alignment - rest};
+        else      return *this;
+    }
+
+    // Constructors.
+    //constexpr addr_t()      : x(0) { }
+    inline           addr_t () = default;
+    template<typename T>
+    inline           addr_t (const T    *p)   : x(reinterpret_cast<type>(p)) { }
+    // WTF: Function pointer type syntax.
+    template<typename T, typename... As>
+    inline           addr_t (T(p)(As...))     : x(reinterpret_cast<type>(p)) { }
+
+    explicit inline constexpr addr_t (type n)          : x(n) { }
+    inline constexpr addr_t (const addr_t &o) : x(o.x) { }
+    inline addr_t &operator=(const addr_t &o) { x = o.x; return *this; }
+};
 
 // NULL macro is bad practice, use nullptr instead.
 #ifdef NULL

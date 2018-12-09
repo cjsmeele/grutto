@@ -67,7 +67,7 @@ OStream &operator<<(OStream &io, const void *ptr) {
     buf[size - 1] = '\0';
     buf[size - 2] = '0';
 
-    addr_t n = reinterpret_cast<addr_t>(ptr);
+    auto n = addr_t{ptr}.u();
 
     size_t i;
     for (i = 0; n; ++i, n >>= 4) {

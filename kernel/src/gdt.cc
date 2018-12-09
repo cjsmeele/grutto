@@ -50,14 +50,16 @@ namespace Gdt {
 
     using desc_t = u64;
 
-    constexpr desc_t make_desc_null () { return 0x0000'0000'0000'0000; }
-    constexpr desc_t make_desc_kcode() { return 0x00df'9a00'0000'ffff; }
-    constexpr desc_t make_desc_kdata() { return 0x00df'9200'0000'ffff; }
-    constexpr desc_t make_desc_ucode() { return 0x00df'fa00'0000'ffff; }
-    constexpr desc_t make_desc_udata() { return 0x00df'f200'0000'ffff; }
+                                      // Don't question these values.
+    constexpr desc_t make_desc_null () { return 0x0000'0000'0000'0000ULL; }
+    constexpr desc_t make_desc_kcode() { return 0x00df'9a00'0000'ffffULL; }
+    constexpr desc_t make_desc_kdata() { return 0x00df'9200'0000'ffffULL; }
+    constexpr desc_t make_desc_ucode() { return 0x00df'fa00'0000'ffffULL; }
+    constexpr desc_t make_desc_udata() { return 0x00df'f200'0000'ffffULL; }
+
     constexpr u64 make_ptr(addr_t a, u16 n_entries) {
         // NB: n_entries must include the null descriptor.
-        return (u64)a << 16 | (n_entries * 8);
+        return u64{a.u()} << 16 | (n_entries * 8);
     }
 
     u64 gdt_ptr;
@@ -83,12 +85,12 @@ namespace Gdt {
     alignas(8) desc_t gdt[5];
 
     void init() {
-        gdt[0] = make_desc_null();
-        gdt[1] = make_desc_kcode();
-        gdt[2] = make_desc_kdata();
-        gdt[3] = make_desc_ucode();
-        gdt[4] = make_desc_udata();
-        gdt_ptr = make_ptr((addr_t)&gdt, 5);
+        gdt[0]  = make_desc_null();
+        gdt[1]  = make_desc_kcode();
+        gdt[2]  = make_desc_kdata();
+        gdt[3]  = make_desc_ucode();
+        gdt[4]  = make_desc_udata();
+        gdt_ptr = make_ptr(gdt, 5);
         asm_lgdt(1, 2);
     }
 

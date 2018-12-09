@@ -62,7 +62,6 @@ public:
     }
 
     T pop() {
-        // Is this actually correct?
         T item = items[--length_].thing;
         items[length_].thing.~T();
         items[length_]._ = null_item_t { }; // For good measure.
