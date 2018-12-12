@@ -32,6 +32,7 @@
 #include "std/char.hh"
 #include "std/string.hh"
 #include "std/svector.hh"
+#include "std/list.hh"
 #include "std/bitmap.hh"
 
 #include "common/asm.hh"

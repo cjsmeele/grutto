@@ -27,7 +27,10 @@ void stdfail();
 
 namespace Mem {
     void *kmalloc(size_t sz);
-    void *kfree(size_t sz);
+    void  kfree(void *p);
 }
 
 inline void *stdmalloc(size_t sz) { return Mem::kmalloc(sz); }
+inline void  stdfree(void *p)     { return Mem::kfree(p); }
+
+void stdtrace(const char *s);

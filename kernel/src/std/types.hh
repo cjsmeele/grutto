@@ -101,7 +101,7 @@ constexpr auto page_size = 4_K;
  * Just like addresses, page numbers are annotated with virtual/physical-ness,
  * using the Tag template parameter.
  *
- * This type is implicitly convertable to/from addresses of the same Tag.
+ * This type is convertable to/from addresses of the same Tag.
  * As part of the conversion, a shift is performed based on the page size.
  */
 template<typename Tag>

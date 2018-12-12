@@ -98,3 +98,7 @@ void KoiStream::init() {
 }
 
 KoiStream koi;
+
+void stdtrace(const char *s) {
+    koi(LL::debug).put_string(s);
+}
