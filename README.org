@@ -9,4 +9,4 @@ Hoe te starten:
 
 : make -j4 -C kernel && make run SERIAL_IO=1
 
-(vereist clang, lld, mtools, perl 5.10.1, en qemu)
+(vereist yasm, clang, lld, mtools, perl 5.10.1, en qemu)

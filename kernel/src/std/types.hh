@@ -147,5 +147,5 @@ struct unusable_t {
     unusable_t(unusable_t&&) = delete;
     unusable_t(unusable_t&)  = delete;
     unusable_t()             = delete;
-    ~unusable_t()            = delete;
+   ~unusable_t()             = delete;
 };

@@ -121,7 +121,7 @@ void TtyVideoOutput::load_font(u8 *f, u32 fw, u32 fh) {
 
 void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, paddr_t pa_framebuffer) {
 
-    koi(LL::debug).fmt("video parameters: {}x{}x{}, pitch {}, fb @phy {08x}\n",
+    koi(LL::debug).fmt("video parameters: {}x{}x{}, pitch {}, fb @phy {}\n",
                        w, h, bpp, pitch,
                        pa_framebuffer);
 
@@ -129,8 +129,7 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, paddr_t pa_framebuff
      && pitch == w*4
      && pa_framebuffer.is_aligned(4)) {
 
-
-        // XXX
+        // XXX Not very nice.
         assert(w*h*(bpp/8) < Vmm::va_framebuffer_max_size, "framebuffer too large");
 
         // FIXME: Actually write something that allocates virtual memory.
@@ -138,7 +137,7 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, paddr_t pa_framebuff
                       ,pa_framebuffer
                       ,div_ceil(w*h*(bpp/8), Vmm::page_size));
 
-        fb = (u32*)Vmm::va_framebuffer;
+        fb = Vmm::va_framebuffer;
 
         width  = w;
         height = h;

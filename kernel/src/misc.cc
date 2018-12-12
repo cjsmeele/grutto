@@ -22,3 +22,8 @@ extern "C" void __cxa_pure_virtual() {
     // This shouldn't happen.
     panic();
 }
+
+extern "C" void __cxa_atexit(void (*)(void*), void*, void*);
+extern "C" void __cxa_atexit(void (*)(void*), void*, void*) {
+    // Don't care, it's not like kmain will ever return :-)
+}

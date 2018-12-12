@@ -9,6 +9,8 @@
 set kernel /boot/grutto32.elf
 
 ## Parameters to be passed to the kernel.
+# v  uncomment to force serial IO  v
+#set cmdline log-debug\ serial
 set cmdline log-debug
 
 ## Automatically boot the set kernel option after `timeout` seconds.
