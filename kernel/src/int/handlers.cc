@@ -27,7 +27,7 @@ namespace Int {
 
 static void dump_frame(OStream &o, Int::interrupt_frame &frame) {
     // This would need to be changed for amd64, of course.
-    static_assert(sizeof(int) == 4);
+    static_assert(sizeof(addr_t) == 4);
 
     auto fmtone = [&] (const char *name, u32 v) {
         o.fmt("{-3} {08x}  ", name, v);
