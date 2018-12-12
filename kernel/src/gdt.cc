@@ -50,12 +50,19 @@ namespace Gdt {
 
     using desc_t = u64;
 
+    static_assert(sizeof(void*) == 4, "this needs to be changed for long mode");
+
                                       // Don't question these values.
     constexpr desc_t make_desc_null () { return 0x0000'0000'0000'0000ULL; }
     constexpr desc_t make_desc_kcode() { return 0x00df'9a00'0000'ffffULL; }
     constexpr desc_t make_desc_kdata() { return 0x00df'9200'0000'ffffULL; }
     constexpr desc_t make_desc_ucode() { return 0x00df'fa00'0000'ffffULL; }
     constexpr desc_t make_desc_udata() { return 0x00df'f200'0000'ffffULL; }
+    constexpr desc_t make_desc_tss(vaddr_t a) {
+        return 0x0050'8900'0000'0067ULL
+             | ((u64{a.u()} & 0x00ffffff) << 16)
+             | ((u64{a.u()} & 0xff000000) << 32);
+    }
 
     constexpr u64 make_ptr(vaddr_t a, u16 n_entries) {
         // NB: n_entries must include the null descriptor.
@@ -64,7 +71,7 @@ namespace Gdt {
 
     u64 gdt_ptr;
 
-    inline void asm_lgdt(u16 n_code, u16 n_data) {
+    inline void asm_lgdt(u16 n_code, u16 n_data, u16 n_tss) {
         asm volatile ("lgdtl %[ptr] \n"
                       "mov %[nd], %%ax \n"
                       "mov %%ax,  %%ds \n"
@@ -74,15 +81,20 @@ namespace Gdt {
                       "mov %%ax,  %%ss \n"
                       "mov %%ax,  %%ax \n"
                       "ljmpl %[nc], $new_cs___ \n"
-                      "new_cs___: nop\n"
+                      "new_cs___: \n"
+                      "mov %[nt], %%ax \n"
+                      "ltr %%ax \n"
                       :: [ptr] "m" (gdt_ptr)
                        , [nc]  "i" (n_code*8)
                        , [nd]  "i" (n_data*8)
+                       , [nt]  "i" (n_tss *8)
                        );
     }
 
 
-    alignas(8) desc_t gdt[5];
+    alignas(8) desc_t gdt[6];
+
+    tss_t tss { };
 
     void init() {
         gdt[0]  = make_desc_null();
@@ -90,8 +102,9 @@ namespace Gdt {
         gdt[2]  = make_desc_kdata();
         gdt[3]  = make_desc_ucode();
         gdt[4]  = make_desc_udata();
-        gdt_ptr = make_ptr(gdt, 5);
-        asm_lgdt(1, 2);
+        gdt[5]  = make_desc_tss(&tss);
+        gdt_ptr = make_ptr(gdt, 6);
+        asm_lgdt(1, 2, 5);
     }
 
 }
