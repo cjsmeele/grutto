@@ -36,16 +36,16 @@ namespace Pmm {
         return bmp.elem(elem);
     }
 
-    Optional<page_t> alloc(size_t count, size_t align) {
+    Optional<ppage_t> alloc(size_t count, size_t align) {
          auto start = bmp.find_contiguous(div_ceil(lowest_usable_address, page_size)
                                          ,count
                                          ,align);
          if (start)
              bmp.set_range(*start, count, true);
-         return page_t {*start};
+         return ppage_t {*start};
     }
 
-    void free(page_t elem, size_t count) {
+    void free(ppage_t elem, size_t count) {
         // NB: This assumes the given range is actually allocated.
         //     Otherwise, counters will lose accuracy.
 

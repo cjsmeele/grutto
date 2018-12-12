@@ -39,9 +39,9 @@ namespace Vmm {
 
     paddr_t kva_to_pa(vaddr_t va) { return paddr_t{ va.u() - kernel_vma().u() + kernel_lma().u() }; }
 
-    pte_t make_pde_4M(page_t pn)    { return pte_t{   pn.u()} << 12 | 0x80 | 3; }
-    pte_t make_pde_pt(page_t pt_pn) { return pte_t{pt_pn.u()} << 12 | 3; }
-    pte_t make_pte(page_t pn)       { return pte_t{   pn.u()} << 12 | 3; }
+    pte_t make_pde_4M(ppage_t pn)    { return pte_t{   pn.u()} << 12 | 0x80 | 3; }
+    pte_t make_pde_pt(ppage_t pt_pn) { return pte_t{pt_pn.u()} << 12 | 3; }
+    pte_t make_pte(ppage_t pn)       { return pte_t{   pn.u()} << 12 | 3; }
 
     // 4M-aligned pa of the kernel's page tables (to be allocated).
     auto pa_kernel_pts = paddr_t{0};
@@ -52,7 +52,7 @@ namespace Vmm {
     //     return {get_pte(vp) >> 12} page_t{va}.u() >> 10;
     // }
 
-    pte_t &get_pte(page_t vn) {
+    pte_t &get_pte(vpage_t vn) {
         // Obtain page table entry for the given virtual address.
         u32 ptn   = vn.u() >> 10;   // pde / page table number.
         u32 pten  = vn.u() & 0x3ff; // pte / page number.
@@ -67,7 +67,7 @@ namespace Vmm {
         return pt[pten];
     }
 
-    void map_page(page_t vn, page_t pn) {
+    void map_page(vpage_t vn, ppage_t pn) {
         get_pte(vn) = make_pte(pn);
         // koi.fmt("map {08x} -> {08x} [{08x}]\n",
         //         addr_t{vn},
@@ -75,7 +75,7 @@ namespace Vmm {
         //         get_pte(vn));
     }
 
-    void map_pages(page_t vn, page_t pn, size_t count) {
+    void map_pages(vpage_t vn, ppage_t pn, size_t count) {
         if (UNLIKELY(count == 0)) return;
 
         if (   is_divisible(vn.u(), 1_K)
@@ -88,7 +88,7 @@ namespace Vmm {
             map_page(vn+i, pn+i);
     }
 
-    void alloc_at(page_t vn, size_t count) {
+    void alloc_at(vpage_t vn, size_t count) {
 
         if (UNLIKELY(count == 0)) return;
 
@@ -107,12 +107,12 @@ namespace Vmm {
         }
     }
 
-    void unmap_page(page_t vn) {
+    void unmap_page(vpage_t vn) {
         get_pte(vn) = 0;
     }
 
-    void free_page(page_t vn) {
-        Pmm::free(page_t {get_pte(vn) >> 12});
+    void free_page(vpage_t vn) {
+        Pmm::free(ppage_t {get_pte(vn) >> 12});
         unmap_page(vn);
     }
 

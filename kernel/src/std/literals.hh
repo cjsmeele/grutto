@@ -19,7 +19,7 @@
 
 #include "types.hh"
 
-u64 constexpr operator ""_K(u64 i) { return i * 1024; }
-u64 constexpr operator ""_M(u64 i) { return i * 1024 * 1024; }
-u64 constexpr operator ""_G(u64 i) { return i * 1024 * 1024 * 1024; }
+u64 constexpr operator ""_K(u64 i) { return i * 1024;                      }
+u64 constexpr operator ""_M(u64 i) { return i * 1024 * 1024;               }
+u64 constexpr operator ""_G(u64 i) { return i * 1024 * 1024 * 1024;        }
 u64 constexpr operator ""_T(u64 i) { return i * 1024 * 1024 * 1024 * 1024; }

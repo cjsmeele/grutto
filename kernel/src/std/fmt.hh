@@ -171,7 +171,7 @@ template<typename F> constexpr void fmt2(F fn, Fmtflags &f,  u8 n) { fmt2(fn, f,
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, u16 n) { fmt2(fn, f, (u64)n); }
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, u32 n) { fmt2(fn, f, (u64)n); }
 
-template<typename F, size_t Tag>
+template<typename F, typename Tag>
 constexpr void fmt2(F fn, Fmtflags &f, addr_base_t<Tag> a) {
     f.radix        = 16;
     f.prefix_zero  = true;

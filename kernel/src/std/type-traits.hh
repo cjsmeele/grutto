@@ -74,5 +74,7 @@ struct intmax {
     constexpr static size_t value = is_signed<T>::value
         ? ~T(1 << (sizeof(T)*8-1)) : static_cast<T>(-1);
 };
-template<size_t Tag>
-struct intmax<addr_base_t<Tag>> { constexpr static size_t value = intmax<typename addr_base_t<Tag>::type>::value; };
+template<typename Tag>
+struct intmax<addr_base_t<Tag>> {
+    constexpr static size_t value = intmax<typename addr_base_t<Tag>::type>::value;
+};

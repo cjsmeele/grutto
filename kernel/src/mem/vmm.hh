@@ -41,17 +41,17 @@ namespace Vmm {
 
     paddr_t kva_to_pa(vaddr_t va);
 
-    constexpr size_t va_to_ptn(vaddr_t va) { return page_t{va}.u() >> 10; }
+    constexpr size_t va_to_ptn(vaddr_t va) { return vpage_t{va}.u() >> 10; }
 
-    void map_page (page_t vn, page_t pn);
-    void map_pages(page_t vn, page_t pn, size_t count);
+    void map_page (vpage_t vn, ppage_t pn);
+    void map_pages(vpage_t vn, ppage_t pn, size_t count);
 
-    void alloc_at(page_t vn, size_t count);
+    void alloc_at(vpage_t vn, size_t count);
 
     void alloc(size_t count);
 
-    void unmap_page(page_t vn);
-    void free_page(page_t vn);
+    void unmap_page(vpage_t vn);
+    void free_page(vpage_t vn);
 
     void init();
 }
