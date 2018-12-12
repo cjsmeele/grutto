@@ -148,6 +148,7 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, addr_t pa_framebuffe
 
         clear();
 
+        // Draw a grutto.
         {
             RESDECLT_(grutto_small, pic, u32); u32 pw = 244; u32 ph = 144;
             for (size_t y = 0; y < ph; ++y) {
@@ -168,4 +169,3 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, addr_t pa_framebuffe
         // Unsupported video mode.
     }
 }
-

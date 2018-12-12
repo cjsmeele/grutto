@@ -19,15 +19,15 @@
 #include "../cmdline.hh"
 
 void KoiStream::put_char(char c) {
-    if (LIKELY(default_stream))
+    if (LIKELY(!!default_stream))
         default_stream->put_char(c);
 }
 void KoiStream::put_string(const char *s) {
-    if (LIKELY(default_stream))
+    if (LIKELY(!!default_stream))
         default_stream->put_string(s);
 }
 char KoiStream::get_char() {
-    if (LIKELY(default_stream))
+    if (LIKELY(!!default_stream))
         return default_stream->get_char();
     else
         hang();
@@ -50,8 +50,15 @@ void KoiStream::init_after_mem_init() {
     bool force_serial = Cmdline::get_flag("serial");
     bool force_tty    = Cmdline::get_flag("tty");
 
-    if (!force_serial)
+
+    if (!force_serial) {
+        if (default_stream == &tty)
+            // Avoid having the TTY print to itself while it is initializing.
+            // (if a serial device is connected, it will be used instead)
+            default_stream = nullptr;
+
         tty.init_after_mem_init();
+    }
 
     if (!force_serial && tty.available()) {
         default_stream = &tty;

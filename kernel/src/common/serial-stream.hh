@@ -81,7 +81,7 @@ public:
         // NOTE: At this point, memory management and interrupts are likely to be unavailable.
 
         // Look up COM0 io port in BDA.
-        port = *((u16*)0x0400 + PortNumber);
+        port = *((volatile u16*)0x0400 + PortNumber);
 
         if (port) {
             Io::outb(port + 1, 0x00); // Disable all interrupts
