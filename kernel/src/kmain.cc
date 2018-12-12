@@ -77,9 +77,9 @@ static void kmain() {
 
     auto start_time = uptime();
     for (u64 i = 0;; ++i) {
+        auto up = 10050_ms - uptime();
         koi.fmt("\r[{6}.{02}] {} ",
-                time_s(uptime()),
-                time_ms(uptime())/10 % 100,
+                time_s(up), time_ms(up)/10 % 100,
                 "/-\\|"[i/2%4]);
         ksleep(50_ms);
 

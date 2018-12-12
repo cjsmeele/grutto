@@ -100,7 +100,7 @@ STAGE2_BIN     ?= stoomboot-stage2.bin
 QEMU    ?= qemu-system-x86_64
 GDB     ?= gdb
 
-QEMUMEM ?= 1024
+QEMUMEM ?= 512
 
 #QEMUFLAGS       := -m $(QEMUMEM)M -name "osdev" -net none -serial none -vga std \
 #	-drive file=$(DISK_FILE),if=ide,media=disk,format=raw -d guest_errors \
@@ -113,6 +113,10 @@ QEMUFLAGS       := -m $(QEMUMEM)M -name "osdev" -net none -serial none -vga std 
 QEMUFLAGS_DEBUG := -m $(QEMUMEM)M -name "osdev" -net none -serial none -vga std \
 	-drive file=$(DISK_FILE),if=scsi,media=disk,format=raw -d guest_errors \
 	-s -S -monitor stdio
+
+QEMUFLAGS_FAST  := -m $(QEMUMEM)M -name "osdev" -net none -serial stdio -vga std \
+	-drive file=$(DISK_FILE),if=ide,media=disk,format=raw -d guest_errors \
+	-enable-kvm -display none -kernel $(BINFILE) -append "log-debug serial"
 
 ifdef SERIAL_IO
 QEMUFLAGS += -serial stdio
@@ -129,6 +133,10 @@ GDBFLAGS := -q -n -x gdbrc32
 run: kernel $(DISK_FILE)
 	$(E) "  QEMU     $<"
 	$(Q)$(QEMU) $(QEMUFLAGS)
+
+fast: kernel $(DISK_FILE)
+	$(E) "  QEMU     $<"
+	$(Q)$(QEMU) $(QEMUFLAGS_FAST)
 
 run-debug: $(DISK_FILE)
 	$(E) "  QEMU     $<"
