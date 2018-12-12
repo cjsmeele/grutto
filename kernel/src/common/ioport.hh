@@ -18,41 +18,6 @@
 #pragma once
 
 namespace Io {
-
-    /*
-    inline void outb(u16 port, u8 val) {
-        asm volatile ("out dx, al"::"a"(val), "d" (port));
-    }
-
-    inline void outw(u16 port, u16 val) {
-        asm volatile ("out dx, ax"::"a"(val), "d" (port));
-    }
-
-    inline void outl(u16 port, u32 val) {
-        asm volatile ("out dx, eax"::"a"(val), "d" (port));
-    }
-
-    inline u8 inb(u16 port) {
-        u8 ret;
-        asm volatile ("in al, dx":"=a"(ret):"d"(port));
-        return ret;
-    }
-
-    inline u16 inw(u16 port) {
-        u16 ret;
-        asm volatile ("in ax, dx":"=a"(ret):"d"(port));
-        return ret;
-    }
-
-    inline u32 inl(u16 port) {
-        u32 ret;
-        asm volatile ("in eax, dx":"=a"(ret):"d"(port));
-        return ret;
-    }
-    */
-
-
-
     inline void outb(u16 port, u8 val) {
         asm volatile ("outb %0, %1"::"a"(val), "Nd" (port));
     }
@@ -82,37 +47,13 @@ namespace Io {
         asm volatile ("inl %1,%0":"=a"(ret):"Nd"(port));
         return ret;
     }
-    
 
-    /*
-    inline void outb(u16 port, u8 val) {
-        asm volatile ("out byte [%1], %0"::"a"(val), "Nd" (port));
-    }
-
-    inline void outw(u16 port, u16 val) {
-        asm volatile ("out word %0,%1"::"a"(val), "Nd" (port));
-    }
-
-    inline void outl(u16 port, u32 val) {
-        asm volatile ("out dword %0,%1"::"a"(val), "Nd" (port));
-    }
-
-    inline u8 inb(u16 port) {
-        u8 ret;
-        asm volatile ("in byte %1,%0":"=a"(ret):"Nd"(port));
-        return ret;
-    }
-
-    inline u16 inw(u16 port) {
-        u16 ret;
-        asm volatile ("in word %1,%0":"=a"(ret):"Nd"(port));
-        return ret;
-    }
-
-    inline u32 inl(u16 port) {
-        u32 ret;
-        asm volatile ("in dword %1,%0":"=a"(ret):"Nd"(port));
-        return ret;
-    }
-    */
+    template<typename T>
+    struct Port;
+    template<> struct Port<u8 > {
+        u16 port; void write(u8  v) const { outb(port, v); } u8  read() const { return inb(port); } };
+    template<> struct Port<u16> {
+        u16 port; void write(u16 v) const { outw(port, v); } u16 read() const { return inw(port); } };
+    template<> struct Port<u32> {
+        u16 port; void write(u32 v) const { outl(port, v); } u32 read() const { return inl(port); } };
 }

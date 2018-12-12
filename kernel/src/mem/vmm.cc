@@ -145,7 +145,6 @@ namespace Vmm {
 
         // These are not mapped yet.
         pa_kernel_pts = addr_t{*kernel_pt_phy_};
-        koi.fmt("ptphy is {08x}\n", pa_kernel_pts);
 
         // Monkey-patch current page directory so we can address these WIP tables.
         // ~~ If it's hacky and you know it, clap your hands. 👏 👏 ~~
@@ -157,7 +156,6 @@ namespace Vmm {
         // Insert them into the new page directory as well.
         pd[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
 
-        koi.fmt("clearing 1M of {} at {}\n", sizeof(pde_t), (pte_t*)va_kernel_pts);
         Mem::set((pte_t*)va_kernel_pts, (pde_t)0, 1_M);
 
         // Map the kernel.

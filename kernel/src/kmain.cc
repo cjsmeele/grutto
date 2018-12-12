@@ -24,11 +24,12 @@
 #include "mem/pmm.hh"
 #include "mem/vmm.hh"
 #include "mem/kmm.hh"
+#include "pci.hh"
 
 // nnoremap <F5> :w \| split \| terminal make -Bj8 && make -C.. run NOVGA=1<CR>
 //register int sp asm ("sp");
 
-static void main() {
+static void kmain() {
 
     // Second stage IO initialization, now that we can access multiboot info.
     koi.init_after_multiboot();
@@ -61,7 +62,9 @@ static void main() {
     if (Multiboot::cmdline())
         koi(LL::notice).fmt("{-20} {}\n", "kernel commandline:", Multiboot::cmdline());
 
-    koi.fmt("\nmemory: {S} available\n\n", Pmm::mem_available());
+    koi(LL::notice).fmt("\nmemory: {S} available\n\n", Pmm::mem_available());
+
+    Pci::init();
 
     //RESDECLT_(hoofd, hoofd, u8);
     //u8 *buf = hoofd;
@@ -74,13 +77,14 @@ static void main() {
 
     auto start_time = uptime();
     for (u64 i = 0;; ++i) {
-        const char *x = "/-\\|";
         koi.fmt("\r[{6}.{02}] {} ",
                 time_s(uptime()),
                 time_ms(uptime())/10 % 100,
-                x[i/5%4]);
+                "/-\\|"[i/2%4]);
         ksleep(50_ms);
-        if (uptime() - start_time > 10_s) trap(0xe0fe0f88);
+
+        if (uptime() - start_time > 10_s)
+            trap(0xe0fe0f88);
     }
 }
 
@@ -92,6 +96,6 @@ extern "C" void cstart(multiboot_info *info) {
 
     Multiboot::init(info);
 
-    main();
+    kmain();
     panic();
 }
