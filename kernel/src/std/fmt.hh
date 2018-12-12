@@ -171,13 +171,13 @@ template<typename F> constexpr void fmt2(F fn, Fmtflags &f,  u8 n) { fmt2(fn, f,
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, u16 n) { fmt2(fn, f, (u64)n); }
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, u32 n) { fmt2(fn, f, (u64)n); }
 
-template<typename F>
-constexpr void fmt2(F fn, Fmtflags &f, addr_t a) {
+template<typename F, size_t Tag>
+constexpr void fmt2(F fn, Fmtflags &f, addr_base_t<Tag> a) {
     f.radix        = 16;
     f.prefix_zero  = true;
     f.unsign       = true;
 
-    if constexpr (sizeof(addr_t) >= 8)
+    if constexpr (sizeof(void*) >= 8)
          f.width = 16;
     else f.width =  8;
 
@@ -187,7 +187,7 @@ constexpr void fmt2(F fn, Fmtflags &f, addr_t a) {
 }
 template<typename F, typename T>
 constexpr void fmt2(F fn, Fmtflags &f, const T *a) {
-    fmt2(fn, f, addr_t{a});
+    fmt2(fn, f, vaddr_t{a});
 }
 
 template<typename F, typename... As>

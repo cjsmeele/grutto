@@ -21,7 +21,7 @@
 
 class TtyTextOutput : public OStream {
 
-    static constexpr auto   pa_fb   = addr_t{0xb8000};
+    static constexpr auto   pa_fb   = paddr_t{0xb8000};
     static constexpr u32    width   = 80;
     static constexpr u32    height  = 25;
 
@@ -75,7 +75,7 @@ public:
     void put_char(char c);
     void put_string(const char *s);
 
-    void init(u32 width, u32 height, u32 bpp, u32 pitch, addr_t pa_framebuffer);
+    void init(u32 width, u32 height, u32 bpp, u32 pitch, paddr_t pa_framebuffer);
 };
 
 class TtyStream : public IoStream {

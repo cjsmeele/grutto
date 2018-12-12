@@ -37,15 +37,14 @@ namespace Vmm {
 
     // TODO separate pa/va types to avoid confusion?
 
-    addr_t kva_to_pa(addr_t va) { return addr_t{ va.u() - kernel_vma().u() + kernel_lma().u() }; }
-    //addr_t kva_to_pa(void *va)  { return kva_to_pa((addr_t)va); }
+    paddr_t kva_to_pa(vaddr_t va) { return paddr_t{ va.u() - kernel_vma().u() + kernel_lma().u() }; }
 
     pte_t make_pde_4M(page_t pn)    { return pte_t{   pn.u()} << 12 | 0x80 | 3; }
     pte_t make_pde_pt(page_t pt_pn) { return pte_t{pt_pn.u()} << 12 | 3; }
     pte_t make_pte(page_t pn)       { return pte_t{   pn.u()} << 12 | 3; }
 
     // 4M-aligned pa of the kernel's page tables (to be allocated).
-    auto pa_kernel_pts = addr_t{0};
+    auto pa_kernel_pts = paddr_t{0};
 
     // Optional<addr_t> va_to_pa(addr_t va)  { return page_t{va}.u() >> 10; }
     // Optional<page_t> vp_to_pp(page_t vp)  {
@@ -128,7 +127,7 @@ namespace Vmm {
         // First off, some sanity checks.
         assert(kernel_lma().is_aligned(page_size),
                "kernel is not loaded on a page boundary");
-        assert(addr_t{&kernel_stack}.is_aligned(page_size),
+        assert(paddr_t{&kernel_stack}.is_aligned(page_size),
                "kernel stack is not page-aligned");
 
         // Enable page size extensions for 4M pages.
@@ -144,7 +143,7 @@ namespace Vmm {
         assert(kernel_pt_phy_.ok(), "could not allocate kernel pt phy pages");
 
         // These are not mapped yet.
-        pa_kernel_pts = addr_t{*kernel_pt_phy_};
+        pa_kernel_pts = paddr_t{*kernel_pt_phy_};
 
         // Monkey-patch current page directory so we can address these WIP tables.
         // ~~ If it's hacky and you know it, clap your hands. 👏 👏 ~~
@@ -166,11 +165,11 @@ namespace Vmm {
           // XXX: Kernel stack is located in bootstrap code.
           //      As such, the kernel_stack sym is a LMA, not a VMA (!)
           map_pages(va_kernel_stack
-                   ,addr_t{&kernel_stack}
+                   ,paddr_t{&kernel_stack}
                    ,div_ceil(kernel_stack_size, page_size));
         }
 
         // Load the new page directory.
-        asm_cr3(kva_to_pa(addr_t{pd}).u());
+        asm_cr3(kva_to_pa(vaddr_t{pd}).u());
     }
 }

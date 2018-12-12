@@ -35,6 +35,7 @@ namespace Pmm {
 
 }
 
+// TODO: Separate phy/virt page types.
 struct page_t {
     using type = size_t;
 private:
@@ -45,7 +46,8 @@ public:
     explicit inline constexpr operator type() const { return x; }
 
     inline constexpr type u() const { return x; }
-    explicit inline constexpr operator addr_t() const { return addr_t {static_cast<type>(x * Pmm::page_size)}; }
+    explicit inline constexpr operator paddr_t() const { return paddr_t {static_cast<type>(x * Pmm::page_size)}; }
+    explicit inline constexpr operator vaddr_t() const { return vaddr_t {static_cast<type>(x * Pmm::page_size)}; }
 
     inline constexpr page_t operator+(type y) const { return page_t { x + y }; }
     inline constexpr page_t operator-(type y) const { return page_t { x - y }; }
@@ -53,10 +55,11 @@ public:
     // Constructors.
     //constexpr page_t()      : x(0) { }
     inline           page_t () = default;
-    inline constexpr page_t (addr_t a) : x(a.u() / Pmm::page_size) { }
+    inline constexpr page_t (paddr_t a) : x(a.u() / Pmm::page_size) { }
+    inline constexpr page_t (vaddr_t a) : x(a.u() / Pmm::page_size) { }
 
-    explicit inline constexpr page_t (type n)          : x(n)   { }
-             inline constexpr page_t (const page_t &o) : x(o.x) { }
+    explicit inline constexpr page_t (type n)          : x(n)    { }
+             inline constexpr page_t (const page_t &o) : x(o.x)  { }
              inline           page_t &operator=(const page_t &o) { x = o.x; return *this; }
 };
 

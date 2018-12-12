@@ -20,7 +20,7 @@
 
 namespace Kmm {
 
-    addr_t heap_start = ::heap_start();
+    auto   heap_start = ::heap_start();
     size_t heap_size  = 0;
 
     void *more_core(ptrdiff_t diff) {

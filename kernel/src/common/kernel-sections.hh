@@ -27,8 +27,8 @@ extern unusable_t KERNEL_SIZE;
 extern unusable_t HEAP_START;
 //extern unusable_t page_directory;
 
-inline addr_t bootstrap_lma() { return addr_t {&BOOTSTRAP_LMA}; }
-inline addr_t kernel_lma()    { return addr_t {&KERNEL_LMA}; }
-inline addr_t kernel_vma()    { return addr_t {&KERNEL_VMA}; }
-inline size_t kernel_size()   { return (size_t)&KERNEL_SIZE; }
-inline addr_t heap_start()    { return addr_t {&HEAP_START}; }
+inline paddr_t bootstrap_lma() { return paddr_t {&BOOTSTRAP_LMA}; }
+inline paddr_t kernel_lma()    { return paddr_t {&KERNEL_LMA}; }
+inline vaddr_t kernel_vma()    { return vaddr_t {&KERNEL_VMA}; }
+inline size_t kernel_size()    { return (size_t)&KERNEL_SIZE; }
+inline vaddr_t heap_start()    { return vaddr_t {&HEAP_START}; }

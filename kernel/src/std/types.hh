@@ -77,16 +77,15 @@ public:
     template<typename T, typename... As>
     inline           addr_base_t (T(p)(As...))     : x(reinterpret_cast<type>(p)) { }
 
-    explicit inline constexpr addr_base_t (type n)          : x(n) { }
+    explicit inline constexpr addr_base_t (type n)      : x(n) { }
     inline constexpr addr_base_t (const addr_base_t &o) : x(o.x) { }
     inline addr_base_t &operator=(const addr_base_t &o) { x = o.x; return *this; }
 };
 
 
-using  addr_t [[deprecated("use explicit vaddr_t and paddr_t types instead")]]
-              = addr_base_t<0>;
 using paddr_t = addr_base_t<1>;
 using vaddr_t = addr_base_t<2>;
+using  addr_t = vaddr_t;
 
 // NULL macro is bad practice, use nullptr instead.
 #ifdef NULL

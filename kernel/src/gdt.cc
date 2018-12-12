@@ -57,7 +57,7 @@ namespace Gdt {
     constexpr desc_t make_desc_ucode() { return 0x00df'fa00'0000'ffffULL; }
     constexpr desc_t make_desc_udata() { return 0x00df'f200'0000'ffffULL; }
 
-    constexpr u64 make_ptr(addr_t a, u16 n_entries) {
+    constexpr u64 make_ptr(vaddr_t a, u16 n_entries) {
         // NB: n_entries must include the null descriptor.
         return u64{a.u()} << 16 | (n_entries * 8);
     }

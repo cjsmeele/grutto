@@ -26,7 +26,7 @@ namespace Pmm {
     constexpr size_t max_regions = 32;
 
     struct region_t {
-        addr_t start;
+        paddr_t start;
         size_t length;
     };
 
@@ -68,7 +68,7 @@ namespace Pmm {
 
         // These regions are assumed NOT to overlap.
         // Overlapping regions will break memory availability counters.
-        for (auto p = addr_t{mbinfo.mmap_addr}
+        for (auto p = paddr_t{mbinfo.mmap_addr}
              ; p.u() + 4 < mbinfo.mmap_addr + mbinfo.mmap_length
              ; p = p.offset(((multiboot_mmap_entry*)p)->size + 4)) {
 
@@ -99,12 +99,12 @@ namespace Pmm {
                        ,len);
 
                 u64 usable = entry->type == MULTIBOOT_MEMORY_AVAILABLE
-                           ? (addr         <= intmax<addr_t>::value
+                           ? (addr         <= intmax<paddr_t>::value
                              // A region crossing the 4G barrier seems unlikely,
                              // but we will account for it anyway.
-                             ? (addr + len <= intmax<addr_t>::value
+                             ? (addr + len <= intmax<paddr_t>::value
                                ? len
-                               : intmax<addr_t>::value - addr + 1
+                               : intmax<paddr_t>::value - addr + 1
                                )
                              : 0)
                            : 0;
@@ -120,7 +120,7 @@ namespace Pmm {
                 koi(LL::debug).put_char('\n');
 
                 if (usable)
-                    regions.push(region_t{ (addr_t)addr, (size_t)usable });
+                    regions.push(region_t{ static_cast<paddr_t>(addr), (size_t)usable });
             }
         }
 
