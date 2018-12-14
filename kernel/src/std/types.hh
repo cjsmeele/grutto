@@ -62,7 +62,7 @@ private:
     type x;
 public:
     // Conversions.
-    // FIXME: Remove implicit conversion to/from T* for phy addresses.
+    // TODO: Remove implicit conversion to/from T* for phy addresses.
     template<typename T> inline operator  T*()  const { return (T*)x; }
     constexpr   explicit inline operator type() const { return x; }
     constexpr   explicit inline operator bool() const { return x != 0; }
@@ -81,11 +81,11 @@ public:
     }
 
     // Constructors.
-    inline           addr_base_t () = default;
+    inline addr_base_t () = default;
     template<typename T>
-    inline           addr_base_t (const T    *p)   : x(reinterpret_cast<type>(p)) { }
+    inline addr_base_t (const T *p)  : x(reinterpret_cast<type>(p)) { }
     template<typename T, typename... As>
-    inline           addr_base_t (T(p)(As...))     : x(reinterpret_cast<type>(p)) { }
+    inline addr_base_t (T(p)(As...)) : x(reinterpret_cast<type>(p)) { }
 
     explicit inline constexpr addr_base_t (type n)      : x(n) { }
     inline constexpr addr_base_t (const addr_base_t &o) : x(o.x) { }
@@ -125,7 +125,7 @@ public:
     inline           page_base_t () = default;
     inline constexpr page_base_t (addr_base_t<Tag> a) : x(a.u() / page_size) { }
 
-    explicit inline constexpr page_base_t (type n)          : x(n)    { }
+    explicit inline constexpr page_base_t (type n)               : x(n)    { }
              inline constexpr page_base_t (const page_base_t &o) : x(o.x)  { }
              inline           page_base_t &operator=(const page_base_t &o) { x = o.x; return *this; }
 };

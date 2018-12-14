@@ -91,8 +91,7 @@ namespace Gdt {
                        );
     }
 
-
-    alignas(8) desc_t gdt[6];
+    alignas(8) Array<desc_t, 6> gdt;
 
     tss_t tss { };
 
@@ -103,8 +102,7 @@ namespace Gdt {
         gdt[3]  = make_desc_ucode();
         gdt[4]  = make_desc_udata();
         gdt[5]  = make_desc_tss(&tss);
-        gdt_ptr = make_ptr(gdt, 6);
+        gdt_ptr = make_ptr(*gdt, gdt.size());
         asm_lgdt(1, 2, 5);
     }
-
 }

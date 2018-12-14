@@ -27,17 +27,17 @@ namespace Kmm {
         koi.fmt("sbrk, heap_sz {08x}, diff {}\n", heap_size, diff);
 
         if (LIKELY(diff > 0)) {
-            if (is_divisible(heap_size, Vmm::page_size)) {
+            if (is_divisible(heap_size, page_size)) {
                 Vmm::alloc_at(heap_start.offset(heap_size),
-                              div_ceil(diff, Vmm::page_size));
+                              div_ceil(diff, page_size));
 
-                //koi.fmt("alloced {} pages\n", div_ceil(diff, Vmm::page_size));
+                //koi.fmt("alloced {} pages\n", div_ceil(diff, page_size));
             } else {
-                size_t extra = (heap_size + diff) / Vmm::page_size
-                             - heap_size / Vmm::page_size;
+                size_t extra = (heap_size + diff) / page_size
+                             - heap_size / page_size;
 
                 Vmm::alloc_at(heap_start.offset(heap_size)
-                                        .align_up(Vmm::page_size)
+                                        .align_up(page_size)
                              ,extra);
                 //koi.fmt("alloced 1\n");
             }

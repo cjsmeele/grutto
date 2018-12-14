@@ -24,9 +24,8 @@ namespace Vmm {
     using pde_t = u32;
     using pte_t = u32;
 
-    alignas(page_size) pde_t pd[1_K] { }; // A page directory holds 1024 entries.
-
-    // TODO: Remove magic numbers, create helpers for building PDEs and PTEs.
+    //alignas(page_size) pde_t kernel_pd[1_K] { }; // A page directory holds 1024 pdes.
+    alignas(page_size) Array<pde_t,1_K> kernel_pd; // A page directory holds 1024 pdes.
 
     //addr_t pde_pte_addr   (pde_t pde)             { return addr_t{ (pde >> 12) << 12 }; }
     //void   pde_pte_addr   (pde_t pde, addr_t val) { pde = (pde & 0xfffff000) | (pde_t{val.u()} << 12); }
@@ -57,12 +56,12 @@ namespace Vmm {
         u32 ptn   = vn.u() >> 10;   // pde / page table number.
         u32 pten  = vn.u() & 0x3ff; // pte / page number.
         pte_t *pt = (pte_t*)va_kernel_pts + ptn*1_K;
-        if (pd[ptn] & 1) { // pde present?
-            assert((pd[ptn] & 0x80) == 0, "Cannot split up 4M mapping to get a PTE");
+        if (kernel_pd[ptn] & 1) { // pde present?
+            assert((kernel_pd[ptn] & 0x80) == 0, "Cannot split up 4M mapping to get a PTE");
             // To handle above case, we should split the 4M mapping into 4K mappings.
         } else {
             // pde not present, create it.
-            pd[ptn] = make_pde_pt(pa_kernel_pts.offset(ptn*4_K));
+            kernel_pd[ptn] = make_pde_pt(pa_kernel_pts.offset(ptn*4_K));
         }
         return pt[pten];
     }
@@ -135,7 +134,7 @@ namespace Vmm {
         asm_cr4(asm_cr4() | 0x10);
 
         // Start building a new page directory.
-        Mem::set(pd, (pde_t)0, 1_K);
+        kernel_pd.clear();
 
         // Allocate 4M of physical memory for 1024 page tables.
         // 1024 4K pages, aka 4M bytes.
@@ -153,7 +152,7 @@ namespace Vmm {
         // (we could instead have added 4M+alignment to .bss, but that stinks)
 
         // Insert them into the new page directory as well.
-        pd[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
+        kernel_pd[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
 
         Mem::set((pte_t*)va_kernel_pts, (pde_t)0, 1_M);
 
@@ -170,6 +169,6 @@ namespace Vmm {
         }
 
         // Load the new page directory.
-        asm_cr3(kva_to_pa(vaddr_t{pd}).u());
+        asm_cr3(kva_to_pa(vaddr_t{*kernel_pd}).u());
     }
 }

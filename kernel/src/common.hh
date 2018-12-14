@@ -31,6 +31,7 @@
 #include "std/optional.hh"
 #include "std/char.hh"
 #include "std/string.hh"
+#include "std/array.hh"
 #include "std/svector.hh"
 #include "std/list.hh"
 #include "std/bitmap.hh"

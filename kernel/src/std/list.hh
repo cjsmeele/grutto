@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "types.hh"
+
 template<typename T>
 class BiList {
 

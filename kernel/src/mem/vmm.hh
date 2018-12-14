@@ -22,10 +22,6 @@
 
 namespace Vmm {
 
-    constexpr auto page_size   = 4_K;
-
-    constexpr bool is_page_aligned(vaddr_t va) { return va.is_aligned(page_size); }
-
     constexpr auto kernel_stack_size = 16_K;
 
     // 4M-aligned va of the kernel's page tables.
@@ -33,11 +29,13 @@ namespace Vmm {
     // page-aligned va of the kernel's stack.
     constexpr auto va_kernel_stack = vaddr_t {0xffff1000ULL};
 
-    // A 2560*1600*4 framebuffer would be slightly less than 16M, .
+    // A 2560*1600*4 framebuffer would be slightly less than 16M,
     // so rounds up to 0x01000000.
     // Reserve that much vas in advance.
     constexpr auto   va_framebuffer          = vaddr_t {0xef000000ULL};
     constexpr size_t va_framebuffer_max_size =          0x01000000ULL;
+
+    // constexpr bool is_page_aligned(vaddr_t va) { return va.is_aligned(page_size); }
 
     paddr_t kva_to_pa(vaddr_t va);
 
@@ -51,7 +49,7 @@ namespace Vmm {
     void alloc(size_t count);
 
     void unmap_page(vpage_t vn);
-    void free_page(vpage_t vn);
+    void free_page (vpage_t vn);
 
     void init();
 }
