@@ -66,6 +66,9 @@ static void kmain() {
 
     Pci::init();
 
+    // koi.fmt("pdir align: {}\n", alignof(Vmm::pdir_t));
+    // koi.fmt("pdir align: {}\n", alignof(Array<Vmm::pde_t,1_K>));
+
     //RESDECLT_(hoofd, hoofd, u8);
     //u8 *buf = hoofd;
     //assert(is_aligned(buf, Vmm::granularity), "head not aligned");

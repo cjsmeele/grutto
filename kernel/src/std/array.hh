@@ -30,7 +30,8 @@ public:
     constexpr const T* operator*() const { return elems; }
     constexpr       T* operator*()       { return elems; }
 
-    static constexpr size_t size() { return Sz; }
+    static constexpr size_t length() { return Sz; }
+    //static constexpr size_t size()   { return Sz * sizeof(T); }
 
     void clear(const T &x) { for (size_t i = 0; i < Sz; ++i) elems[i] = x;    }
     void clear()           { for (size_t i = 0; i < Sz; ++i) elems[i] = T {}; }

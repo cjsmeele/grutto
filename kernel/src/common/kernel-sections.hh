@@ -32,3 +32,5 @@ inline paddr_t kernel_lma()    { return paddr_t {&KERNEL_LMA}; }
 inline vaddr_t kernel_vma()    { return vaddr_t {&KERNEL_VMA}; }
 inline size_t kernel_size()    { return (size_t)&KERNEL_SIZE; }
 inline vaddr_t heap_start()    { return vaddr_t {&HEAP_START}; }
+
+constexpr auto kernel_stack_size = 16_K;

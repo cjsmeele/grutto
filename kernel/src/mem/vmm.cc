@@ -21,11 +21,21 @@ extern unusable_t kernel_stack;
 
 namespace Vmm {
 
-    using pde_t = u32;
-    using pte_t = u32;
-
     //alignas(page_size) pde_t kernel_pd[1_K] { }; // A page directory holds 1024 pdes.
-    alignas(page_size) Array<pde_t,1_K> kernel_pd; // A page directory holds 1024 pdes.
+    //alignas(page_size) Array<pde_t,1_K> kernel_pd; // A page directory holds 1024 pdes.
+
+    pdir_t *current_pd_ = nullptr;
+
+    pdir_t &current_pd()           { return * current_pd_; }
+    pdir_t &current_pd(pdir_t &pd) {
+        asm_cr3(kva_to_pa(vaddr_t{*pd}).u());
+        return *(current_pd_ = &pd);
+    }
+
+    pdir_t kernel_pd;
+
+    static_assert(alignof(decltype(kernel_pd)) == 4_K,
+                  "Kernel page directory is misaligned");
 
     //addr_t pde_pte_addr   (pde_t pde)             { return addr_t{ (pde >> 12) << 12 }; }
     //void   pde_pte_addr   (pde_t pde, addr_t val) { pde = (pde & 0xfffff000) | (pde_t{val.u()} << 12); }
@@ -33,8 +43,6 @@ namespace Vmm {
     //void   pde_pte_ctx    (pde_t pde, u8 val)     { pde = (pde & 0xfffff1fff) | ((val&0b111) << 9); }
     //bool   pde_pte_present(pde_t pde)             { return (pde & 1); }
     //void   pde_pte_present(pde_t pde, bool val)   { pde = (pde & ~1) | !!val; }
-
-    // TODO separate pa/va types to avoid confusion?
 
     paddr_t kva_to_pa(vaddr_t va) { return paddr_t{ va.u() - kernel_vma().u() + kernel_lma().u() }; }
 
@@ -57,7 +65,8 @@ namespace Vmm {
         u32 pten  = vn.u() & 0x3ff; // pte / page number.
         pte_t *pt = (pte_t*)va_kernel_pts + ptn*1_K;
         if (kernel_pd[ptn] & 1) { // pde present?
-            assert((kernel_pd[ptn] & 0x80) == 0, "Cannot split up 4M mapping to get a PTE");
+            assert((kernel_pd[ptn] & 0x80) == 0,
+                   "Cannot split up 4M mapping to get a PTE");
             // To handle above case, we should split the 4M mapping into 4K mappings.
         } else {
             // pde not present, create it.
@@ -133,6 +142,9 @@ namespace Vmm {
         // TODO: Should probably check (CPUID?) whether this is actually available.
         asm_cr4(asm_cr4() | 0x10);
 
+        // Fetch current page directory, created by bootstrap code.
+        current_pd_ = (pdir_t*)asm_cr3(); // eww.
+
         // Start building a new page directory.
         kernel_pd.clear();
 
@@ -144,12 +156,14 @@ namespace Vmm {
         // These are not mapped yet.
         pa_kernel_pts = paddr_t{*kernel_pt_phy_};
 
-        // Monkey-patch current page directory so we can address these WIP tables.
-        // ~~ If it's hacky and you know it, clap your hands. 👏 👏 ~~
-        { pde_t *old_dir = (pde_t*)asm_cr3();
-          old_dir[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
-        }
-        // (we could instead have added 4M+alignment to .bss, but that stinks)
+        assert(pa_kernel_pts.is_aligned(4_M),
+               "could not 4M-align kernel pt phy pages");
+
+        // Map them in the current page directory.
+        current_pd()[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
+        //map_pages(va_to_ptn(va_kernel_pts)
+        //         ,pa_kernel_pts
+        //         ,1_K);
 
         // Insert them into the new page directory as well.
         kernel_pd[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
@@ -169,6 +183,7 @@ namespace Vmm {
         }
 
         // Load the new page directory.
-        asm_cr3(kva_to_pa(vaddr_t{*kernel_pd}).u());
+        //asm_cr3(kva_to_pa(vaddr_t{*kernel_pd}).u());
+        current_pd(kernel_pd);
     }
 }

@@ -102,7 +102,7 @@ namespace Gdt {
         gdt[3]  = make_desc_ucode();
         gdt[4]  = make_desc_udata();
         gdt[5]  = make_desc_tss(&tss);
-        gdt_ptr = make_ptr(*gdt, gdt.size());
+        gdt_ptr = make_ptr(*gdt, gdt.length());
         asm_lgdt(1, 2, 5);
     }
 }
