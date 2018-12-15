@@ -39,22 +39,17 @@ public:
     void put_char(char c) {
 
         if (LIKELY(port)) {
-            bool ie = Int::enabled();
-            asm_cli();
+            CRITICAL_SCOPE();
             put_char_(c);
-            if (ie) asm_sti();
         }
     }
 
     void put_string(const char *s) {
 
         if (LIKELY(port)) {
-
-            bool ie = Int::enabled();
-            asm_cli();
+            CRITICAL_SCOPE();
             while (*s)
                 put_char_(*(s++));
-            if (ie) asm_sti();
         }
     }
 

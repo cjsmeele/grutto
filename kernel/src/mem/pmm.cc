@@ -57,8 +57,10 @@ namespace Pmm {
          auto start = bmp.find_contiguous(div_ceil(lowest_usable_address, page_size)
                                          ,count
                                          ,align);
-         if (start)
-             bmp.set_range(*start, count, true);
+         if (!start.ok())
+             return nullopt;
+
+         bmp.set_range(*start, count, true);
          return ppage_t {*start};
     }
 

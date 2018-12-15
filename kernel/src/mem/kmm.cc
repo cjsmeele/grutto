@@ -24,26 +24,27 @@ namespace Kmm {
     size_t heap_size  = 0;
 
     void *more_core(ptrdiff_t diff) {
-        koi.fmt("sbrk, heap_sz {08x}, diff {}\n", heap_size, diff);
+        //koi.fmt("sbrk, heap_sz {08x}, diff {}\n", heap_size, diff);
 
         if (LIKELY(diff > 0)) {
             if (is_divisible(heap_size, page_size)) {
-                Vmm::alloc_at(heap_start.offset(heap_size),
-                              div_ceil(diff, page_size));
+                auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size),
+                                                 div_ceil(diff, page_size));
+                assert(vp.ok(), "could not allocate kernel heap - OOM");
 
-                //koi.fmt("alloced {} pages\n", div_ceil(diff, page_size));
             } else {
                 size_t extra = (heap_size + diff) / page_size
                              - heap_size / page_size;
 
-                Vmm::alloc_at(heap_start.offset(heap_size)
-                                        .align_up(page_size)
-                             ,extra);
-                //koi.fmt("alloced 1\n");
+                auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size).align_up(page_size)
+                                                ,extra);
+                assert(vp.ok(), "could not allocate kernel heap - OOM");
             }
         } else if (diff < 0) {
             if ((size_t)-diff > heap_size)
                 diff = -heap_size;
+
+            // TODO: Free pages that are no longer needed.
         }
 
         void *brk = heap_start.offset(heap_size);

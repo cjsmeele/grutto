@@ -45,5 +45,7 @@
 #include "common/debug.hh"
 #include "common/res.hh"
 #include "common/time.hh"
+// XXX
+#include "int/int.hh"
 
 #endif

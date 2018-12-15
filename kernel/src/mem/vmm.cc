@@ -21,112 +21,164 @@ extern unusable_t kernel_stack;
 
 namespace Vmm {
 
-    //alignas(page_size) pde_t kernel_pd[1_K] { }; // A page directory holds 1024 pdes.
-    //alignas(page_size) Array<pde_t,1_K> kernel_pd; // A page directory holds 1024 pdes.
-
-    pdir_t *current_pd_ = nullptr;
-
-    pdir_t &current_pd()           { return * current_pd_; }
-    pdir_t &current_pd(pdir_t &pd) {
-        asm_cr3(kva_to_pa(vaddr_t{*pd}).u());
-        return *(current_pd_ = &pd);
-    }
-
-    pdir_t kernel_pd;
-
-    static_assert(alignof(decltype(kernel_pd)) == 4_K,
-                  "Kernel page directory is misaligned");
-
-    //addr_t pde_pte_addr   (pde_t pde)             { return addr_t{ (pde >> 12) << 12 }; }
-    //void   pde_pte_addr   (pde_t pde, addr_t val) { pde = (pde & 0xfffff000) | (pde_t{val.u()} << 12); }
-    //addr_t pde_pte_ctx    (pde_t pde)             { return (pde >> 9) & 0b111; }
-    //void   pde_pte_ctx    (pde_t pde, u8 val)     { pde = (pde & 0xfffff1fff) | ((val&0b111) << 9); }
-    //bool   pde_pte_present(pde_t pde)             { return (pde & 1); }
-    //void   pde_pte_present(pde_t pde, bool val)   { pde = (pde & ~1) | !!val; }
-
     paddr_t kva_to_pa(vaddr_t va) { return paddr_t{ va.u() - kernel_vma().u() + kernel_lma().u() }; }
 
-    pte_t make_pde_4M(ppage_t pn)    { return pte_t{   pn.u()} << 12 | 0x80 | 3; }
-    pte_t make_pde_pt(ppage_t pt_pn) { return pte_t{pt_pn.u()} << 12 | 3; }
-    pte_t make_pte(ppage_t pn)       { return pte_t{   pn.u()} << 12 | 3; }
+    pdir_t &current_pd() { return *(pdir_t*)va_pdir; }
+
+    void switch_pd(paddr_t pa) { asm_cr3(pa.u()); }
+    void switch_pd(pdir_t &pd) { switch_pd(kva_to_pa(vaddr_t{*pd})); }
+
+    //pdir_t &current_pd(pdir_t &pd) {
+    //    asm_cr3(kva_to_pa(vaddr_t{*pd}).u());
+    //    return *(current_pd_ = &pd);
+    //}
+
+    pdir_t kernel_pd;
+    ptab_t kernel_pt_ptab; // A pagetable for pages containing pagetables.
+
+    static_assert(alignof(decltype(kernel_pd)) == page_size,
+                  "Kernel page directory is misaligned");
+
+    ppage_t pte_page(pde_t pde) { return ppage_t{pde >> 12}; }
+    //addr_t pde_ctx    (pde_t pde)             { return (pde >> 9) & 0b111; }
+    //void   pde_ctx    (pde_t pde, u8 val)     { pde = (pde & 0xfffff1fff) | ((val&0b111) << 9); }
+
+    enum PageFlags : u32 {
+        P_ReadOnly = 0,
+        P_Writable = 2,
+
+        P_Supervisor = 0,
+        P_User       = 4,
+    };
+
+    namespace Impl {
+
+        pte_t make_pte(ppage_t pn, PageFlags flags) {
+            return pte_t{   pn.u()} << 12
+                   | (flags & P_Writable)
+                   | (flags & P_User)
+                   | 1; // present.
+        }
+        pde_t make_pde4M(ppage_t pn, PageFlags flags) {
+            return pte_t{   pn.u()} << 12
+                   | 0x80 // big page.
+                   | (flags & P_Writable)
+                   | (flags & P_User)
+                   | 1;   // present.
+        }
+        pde_t make_pde_pt(ppage_t pt_pn, PageFlags flags) {
+            return pde_t{pt_pn.u()} << 12
+                   | (flags & P_Writable)
+                   | (flags & P_User)
+                   | 1; // present.
+        }
+
+        Optional<paddr_t> resolve_va(vaddr_t va) {
+            auto &pd = *(pdir_t*)va_pdir;
+            auto &pde = pd[va_to_ptn(va)];
+            if (!(pde & 1)) return nullopt;
+            auto &pt = *(ptab_t*)va_pts;
+            auto &pte = pt[vpage_t{va}.u() % 1_K];
+            if (!(pte & 1)) return nullopt;
+            return paddr_t{pte_page(pte)}.offset(va.u() % page_size);
+        }
+
+        void flush() { switch_pd(*resolve_va(va_pdir)); }
+        void invalidate(vpage_t vp) {
+            asm volatile ("invlpg (%0)" :: "a" (vp.u()) : "memory");
+        }
+    }
+
+    namespace User {
+        // Manage user memory mappings.
+
+        // TODO.
+    }
+
+    namespace Kernel {
+        // Manage kernel memory mappings.
+        // These functions operate regardless of the currently selected page
+        // directory, as they modify only the kernel pagetables, which are
+        // shared between all processes.
+
+        // Get the page table for a virtual address in kernel memory area.
+        // This cannot fail - all kernel pagetables are always present.
+        ptab_t &get_ptab(vpage_t vp) {
+            assert(vaddr_t{vp}.u() >= 0xc0000000, "bad kptab");
+            return *(ptab_t*)va_pts.offset((vp.u() >> 10) * 4_K);
+        }
+
+        // Map a page in kernel memory.
+        void map(vpage_t vp, ppage_t pp) {
+            // NB: Not currently exposed.
+            auto &pt  = get_ptab(vp);
+            auto &pte = pt[vp.u() % 1_K];
+            // koi.fmt("map page {} -> {} .. {08x} (@{}, -> {})\n",
+            //         vaddr_t{vp}, paddr_t{pp}, pte, &pte,
+            //         paddr_t{pte_page(pte)});
+            assert(!(pte & 1), "tried to remap page in kernel memory - needs to be unmapped first");
+            pte = Impl::make_pte(pp, P_Writable);
+
+            Impl::invalidate(vp);
+        }
+
+        void map(vpage_t vp, ppage_t pp, size_t count) {
+            for (size_t i = 0; i < count; ++i)
+                map(vp + i, pp + i);
+        }
+
+        void unmap(vpage_t vp) {
+            auto &pt  = get_ptab(vp);
+            auto &pte = pt[vp.u() % 1_K];
+            assert(pte & 1, "tried to unmap an already unmapped page in kernel memory");
+            pte = 0;
+
+            Impl::invalidate(vp);
+        }
+        void unmap(vpage_t vp, size_t count) {
+            for (size_t i = 0; i < count; ++i)
+                unmap(vp + i);
+        }
+
+        Optional<vpage_t> map_alloc(vpage_t vp, size_t count) {
+            // Map memory backed by physical memory.
+            if (UNLIKELY(count == 0)) return vpage_t{0};
+
+            if (vaddr_t{vp + count}.u() > va_kernel_heap_end.u()) {
+                return nullopt; // Out of memory.
+            }
+
+            auto pps = Pmm::alloc(count);
+            if (pps.ok()) {
+                map(vp, *pps, count);
+            } else {
+                // No contiguous block available.
+                // (should probably divide by two and try again...)
+                for (size_t i = 0; i < count; ++i) {
+                    auto pp = Pmm::alloc(1);
+                    //assert(pp.ok(), "could not allocate phy page");
+                    if (!pp.ok())
+                        return nullopt;
+                    map(vp+i, *pp);
+                }
+            }
+            return vp;
+        }
+        void unmap_free(vpage_t vp) {
+            auto &pt  = get_ptab(vp);
+            auto &pte = pt[vp.u() % 1_K];
+            assert(pte & 1, "tried to free an already unmapped page in kernel memory");
+            Pmm::free(pte_page(pte));
+            unmap(vp);
+        }
+        void unmap_free(vpage_t vp, size_t count) {
+            for (size_t i = 0; i < count; ++i)
+                unmap_free(vp + i);
+        }
+    }
 
     // 4M-aligned pa of the kernel's page tables (to be allocated).
     auto pa_kernel_pts = paddr_t{0};
-
-    // Optional<addr_t> va_to_pa(addr_t va)  { return page_t{va}.u() >> 10; }
-    // Optional<page_t> vp_to_pp(page_t vp)  {
-    //     // TODO
-    //     return {get_pte(vp) >> 12} page_t{va}.u() >> 10;
-    // }
-
-    pte_t &get_pte(vpage_t vn) {
-        // Obtain page table entry for the given virtual address.
-        u32 ptn   = vn.u() >> 10;   // pde / page table number.
-        u32 pten  = vn.u() & 0x3ff; // pte / page number.
-        pte_t *pt = (pte_t*)va_kernel_pts + ptn*1_K;
-        if (kernel_pd[ptn] & 1) { // pde present?
-            assert((kernel_pd[ptn] & 0x80) == 0,
-                   "Cannot split up 4M mapping to get a PTE");
-            // To handle above case, we should split the 4M mapping into 4K mappings.
-        } else {
-            // pde not present, create it.
-            kernel_pd[ptn] = make_pde_pt(pa_kernel_pts.offset(ptn*4_K));
-        }
-        return pt[pten];
-    }
-
-    void map_page(vpage_t vn, ppage_t pn) {
-        get_pte(vn) = make_pte(pn);
-        // koi.fmt("map {08x} -> {08x} [{08x}]\n",
-        //         addr_t{vn},
-        //         addr_t{pn},
-        //         get_pte(vn));
-    }
-
-    void map_pages(vpage_t vn, ppage_t pn, size_t count) {
-        if (UNLIKELY(count == 0)) return;
-
-        if (   is_divisible(vn.u(), 1_K)
-            && is_divisible(pn.u(), 1_K)
-            && is_divisible(count,  1_K)) {
-            // TODO: 4M page optimization?
-        }
-        //koi.fmt("alloc {} pages\n", count);
-        for (size_t i = 0; i < count; ++i)
-            map_page(vn+i, pn+i);
-    }
-
-    void alloc_at(vpage_t vn, size_t count) {
-
-        if (UNLIKELY(count == 0)) return;
-
-        auto pns = Pmm::alloc(count);
-        if (pns) {
-            for (size_t i = 0; i < count; ++i)
-                get_pte(vn+i) = make_pte(*pns + i);
-        } else {
-            // No contiguous block available.
-            // (should probably divide by two and try again...)
-            for (size_t i = 0; i < count; ++i) {
-                auto pn = Pmm::alloc(1);
-                assert(pn.ok(), "could not allocate phy page");
-                map_page(vn+i, *pn);
-            }
-        }
-    }
-
-    void unmap_page(vpage_t vn) {
-        get_pte(vn) = 0;
-    }
-
-    void free_page(vpage_t vn) {
-        Pmm::free(ppage_t {get_pte(vn) >> 12});
-        unmap_page(vn);
-    }
-
-    pte_t *get_pt(size_t tn) {
-        return ((pte_t*)va_kernel_pts) + 1_K * tn;
-    }
 
     void init() {
         // Paging is already enabled by bootstrap code.
@@ -142,48 +194,66 @@ namespace Vmm {
         // TODO: Should probably check (CPUID?) whether this is actually available.
         asm_cr4(asm_cr4() | 0x10);
 
-        // Fetch current page directory, created by bootstrap code.
-        current_pd_ = (pdir_t*)asm_cr3(); // eww.
+        // Fetch current page directory, as created by bootstrap code.
+        // Note: This pd lives in the (currently) identity-mapped bootstrap area,
+        // so we can safely address it using its LMA.
+        auto &bootstrap_pd = *(pdir_t*)asm_cr3();
 
         // Start building a new page directory.
         kernel_pd.clear();
+        kernel_pt_ptab.clear();
 
-        // Allocate 4M of physical memory for 1024 page tables.
-        // 1024 4K pages, aka 4M bytes.
-        auto kernel_pt_phy_ = Pmm::alloc(1_K, 32 /* XXX alignment is a hack */);
-        assert(kernel_pt_phy_.ok(), "could not allocate kernel pt phy pages");
+        // Insert the pagetables pagetable into the page directory.
+        // Also store it in the bootstrap pd, so that we can use the pt
+        // before switching over to the new page directory.
+          kernel_pd   [va_to_ptn(va_pts)]
+        = bootstrap_pd[va_to_ptn(va_pts)]
+        = Impl::make_pde_pt(kva_to_pa(vaddr_t{*kernel_pt_ptab})
+                           ,P_Writable);
 
-        // These are not mapped yet.
-        pa_kernel_pts = paddr_t{*kernel_pt_phy_};
+        // Flush.
+        switch_pd(paddr_t{*bootstrap_pd});
 
-        assert(pa_kernel_pts.is_aligned(4_M),
-               "could not 4M-align kernel pt phy pages");
+        // Allocate 1M of physical memory for 256 page tables.
+        // These tables will be used to describe all kernel memory (>=0xc0000000)
+        { auto kernel_pt_phy_ = Pmm::alloc(256);
+          assert(kernel_pt_phy_.ok(), "could not allocate kernel pt phy pages");
+          pa_kernel_pts = paddr_t{*kernel_pt_phy_}; }
 
-        // Map them in the current page directory.
-        current_pd()[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
-        //map_pages(va_to_ptn(va_kernel_pts)
-        //         ,pa_kernel_pts
-        //         ,1_K);
+        // Insert phy addresses of kernel pagetables into the pagetable,
+        // and mark all kernel pagetables as present in the page directory.
+        for (size_t i = 0; i < 256; ++i) {
+            auto j = 768 + i;
+            // Do not overwrite existing mappings.
+            // (specifically, do not overwrite the va_pts mapping)
+            if (!(kernel_pd[j] & 1))
+                kernel_pd[j] = Impl::make_pde_pt(pa_kernel_pts.offset(i * page_size)
+                                                ,P_Writable);
+            kernel_pt_ptab[j] = Impl::make_pte(pa_kernel_pts.offset(i * page_size)
+                                              ,P_Writable);
+            ((ptab_t*)va_pts)[j].clear();
+        }
 
-        // Insert them into the new page directory as well.
-        kernel_pd[va_to_ptn(va_kernel_pts)] = make_pde_4M(pa_kernel_pts);
+        // Now the entire kernel memory region is supplied with pagetables,
+        // making kernel memory allocation quite a bit simpler for us.
+        // Regular Vmm functions to manage kernel memory mappings are now
+        // available to us.
 
-        Mem::set((pte_t*)va_kernel_pts, (pde_t)0, 1_M);
+        // Map the page directory at a known location.
+        Kernel::map(va_pdir, kva_to_pa(*kernel_pd));
 
         // Map the kernel.
-        { map_pages(kernel_vma()
+        Kernel::map(kernel_vma()
                    ,kernel_lma()
                    ,div_ceil(kernel_size(), page_size));
 
-          // XXX: Kernel stack is located in bootstrap code.
-          //      As such, the kernel_stack sym is a LMA, not a VMA (!)
-          map_pages(va_kernel_stack
+        // XXX: Kernel stack is located in bootstrap code.
+        //      As such, the kernel_stack sym is a LMA, not a VMA (!)
+        Kernel::map(va_kernel_stack
                    ,paddr_t{&kernel_stack}
                    ,div_ceil(kernel_stack_size, page_size));
-        }
 
         // Load the new page directory.
-        //asm_cr3(kva_to_pa(vaddr_t{*kernel_pd}).u());
-        current_pd(kernel_pd);
+        switch_pd(kernel_pd);
     }
 }

@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "common.hh"
+//#include "common.hh"
 
 namespace Int {
 
@@ -33,4 +33,17 @@ namespace Int {
         asm_sti();
         enabled_ = true;
     }
+
+    struct Critical {
+        bool active = false;
+        Critical() {
+            if (Int::enabled()) {
+                Int::cli();
+                active = true;
+            }
+        }
+        ~Critical() { if (active) Int::sti(); }
+    };
+
+    #define CRITICAL_SCOPE() Int::Critical critical_obj_ {}
 }

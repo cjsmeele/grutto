@@ -48,15 +48,8 @@ u32 TtyVideoOutput::rows() const {
 }
 
 void TtyVideoOutput::put_char(char c) {
-    auto cursor_it = [&] () {
-        for (u32 cy = 0; cy < ch; ++cy) {
-            for (u32 cx = 0; cx < cw/4; ++cx) {
-                //auto &x = fb[(fby*ch+cy)*width + fbx*cw + cx];
-                //x = ~x;
-            }
-        }
-    };
-    cursor_it();
+
+    CRITICAL_SCOPE();
 
     if (c == '\r') {
         fbx = 0;
@@ -83,8 +76,6 @@ void TtyVideoOutput::put_char(char c) {
     }
     if (fby >= rows())
         scroll(1);
-
-    cursor_it();
 }
 void TtyVideoOutput::put_string(const char *s) {
     while (*s)
@@ -97,6 +88,9 @@ void TtyVideoOutput::clear() {
         Mem::set(fb+choff(0, y/ch)+y%ch*width, bg, cols()*cw);
 }
 void TtyVideoOutput::scroll(int n) {
+
+    CRITICAL_SCOPE();
+
     while (n > 0) {
         for (u32 y = 0; y < rows()-1; ++y) {
             for (u32 cy = 0; cy < ch; ++cy) {
@@ -133,9 +127,9 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, paddr_t pa_framebuff
         assert(w*h*(bpp/8) < Vmm::va_framebuffer_max_size, "framebuffer too large");
 
         // FIXME: Actually write something that allocates virtual memory.
-        Vmm::map_pages(Vmm::va_framebuffer
-                      ,pa_framebuffer
-                      ,div_ceil(w*h*(bpp/8), page_size));
+        Vmm::Kernel::map(Vmm::va_framebuffer
+                        ,pa_framebuffer
+                        ,div_ceil(w*h*(bpp/8), page_size));
 
         fb = Vmm::va_framebuffer;
 

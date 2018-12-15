@@ -20,6 +20,9 @@
 #include "../mem/vmm.hh"
 
 void TtyTextOutput::scroll(int n) {
+
+    CRITICAL_SCOPE();
+
     while (n > 0) {
         for (u8 y = 0; y < height-1; ++y) {
             Mem::copy(&fb[y     * width],
@@ -33,6 +36,9 @@ void TtyTextOutput::scroll(int n) {
 }
 
 void TtyTextOutput::put_char(char c) {
+
+    CRITICAL_SCOPE();
+
     if (c == '\r') {
         fbx = 0;
     } else if (c == '\n') {
@@ -54,9 +60,9 @@ void TtyTextOutput::put_string(const char *s) {
 
 void TtyTextOutput::init_after_mem_init() {
     // The first 1M is no longer identity-mapped, we need to remap it at the right spot.
-    Vmm::map_pages(Vmm::va_framebuffer
-                  ,pa_fb
-                  ,div_ceil(width*height*2, page_size));
+    Vmm::Kernel::map(Vmm::va_framebuffer
+                    ,pa_fb
+                    ,div_ceil(width*height*2, page_size));
 
     fb = (u16*)Vmm::va_framebuffer;
 }

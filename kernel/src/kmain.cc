@@ -66,8 +66,10 @@ static void kmain() {
 
     Pci::init();
 
-    // koi.fmt("pdir align: {}\n", alignof(Vmm::pdir_t));
-    // koi.fmt("pdir align: {}\n", alignof(Array<Vmm::pde_t,1_K>));
+    //struct X {int x[1000];};
+    //List<X> li;
+    //for (int i = 0; i < 2_K; ++i)
+    //    li.append(X{i});
 
     //RESDECLT_(hoofd, hoofd, u8);
     //u8 *buf = hoofd;

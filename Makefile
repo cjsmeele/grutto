@@ -111,7 +111,7 @@ QEMUFLAGS       := -m $(QEMUMEM)M -name "osdev" -net none -serial none -vga std 
 # -display sdl
 
 QEMUFLAGS_DEBUG := -m $(QEMUMEM)M -name "osdev" -net none -serial none -vga std \
-	-drive file=$(DISK_FILE),if=scsi,media=disk,format=raw -d guest_errors \
+	-drive file=$(DISK_FILE),if=ide,media=disk,format=raw -d guest_errors \
 	-s -S -monitor stdio
 
 QEMUFLAGS_FAST  := -m $(QEMUMEM)M -name "osdev" -net none -serial stdio -vga std \
