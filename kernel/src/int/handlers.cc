@@ -95,6 +95,18 @@ extern "C" {
            ,exceptions[frame->int_no].desc
            ,frame->eip);
 
+        if (frame->int_no == 0x0e) {
+            auto err = frame->err_code;
+            koi(LL::critical).fmt
+               ("A page fault was triggered while {} vma {} from {}.\n"
+                "{}\n\n"
+               ,err & 2 ? "writing" : "reading"
+               ,vaddr_t{asm_cr2()}
+               ,err & 4 ? "user-mode code" : "kernel-mode code"
+               ,err & 1 ? "Page-level protection bits prevented the access."
+                        : "The page was NOT present at the time.");
+        }
+
         dump_frame(koi(LL::critical), *frame);
 
         panic();

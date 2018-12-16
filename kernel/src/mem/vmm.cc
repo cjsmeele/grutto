@@ -43,14 +43,6 @@ namespace Vmm {
     //addr_t pde_ctx    (pde_t pde)             { return (pde >> 9) & 0b111; }
     //void   pde_ctx    (pde_t pde, u8 val)     { pde = (pde & 0xfffff1fff) | ((val&0b111) << 9); }
 
-    enum PageFlags : u32 {
-        P_ReadOnly = 0,
-        P_Writable = 2,
-
-        P_Supervisor = 0,
-        P_User       = 4,
-    };
-
     namespace Impl {
 
         pte_t make_pte(ppage_t pn, PageFlags flags) {
@@ -109,7 +101,7 @@ namespace Vmm {
         }
 
         // Map a page in kernel memory.
-        void map(vpage_t vp, ppage_t pp) {
+        void map_one(vpage_t vp, ppage_t pp, PageFlags flags) {
             // NB: Not currently exposed.
             auto &pt  = get_ptab(vp);
             auto &pte = pt[vp.u() % 1_K];
@@ -117,14 +109,14 @@ namespace Vmm {
             //         vaddr_t{vp}, paddr_t{pp}, pte, &pte,
             //         paddr_t{pte_page(pte)});
             assert(!(pte & 1), "tried to remap page in kernel memory - needs to be unmapped first");
-            pte = Impl::make_pte(pp, P_Writable);
+            pte = Impl::make_pte(pp, flags);
 
             Impl::invalidate(vp);
         }
 
-        void map(vpage_t vp, ppage_t pp, size_t count) {
+        void map(vpage_t vp, ppage_t pp, size_t count, PageFlags flags) {
             for (size_t i = 0; i < count; ++i)
-                map(vp + i, pp + i);
+                map_one(vp + i, pp + i, flags);
         }
 
         void unmap(vpage_t vp) {
@@ -140,7 +132,7 @@ namespace Vmm {
                 unmap(vp + i);
         }
 
-        Optional<vpage_t> map_alloc(vpage_t vp, size_t count) {
+        Optional<vpage_t> map_alloc(vpage_t vp, size_t count, PageFlags flags) {
             // Map memory backed by physical memory.
             if (UNLIKELY(count == 0)) return vpage_t{0};
 
@@ -150,7 +142,7 @@ namespace Vmm {
 
             auto pps = Pmm::alloc(count);
             if (pps.ok()) {
-                map(vp, *pps, count);
+                map(vp, *pps, count, flags);
             } else {
                 // No contiguous block available.
                 // (should probably divide by two and try again...)
@@ -159,7 +151,7 @@ namespace Vmm {
                     //assert(pp.ok(), "could not allocate phy page");
                     if (!pp.ok())
                         return nullopt;
-                    map(vp+i, *pp);
+                    map_one(vp+i, *pp, flags);
                 }
             }
             return vp;
@@ -240,18 +232,34 @@ namespace Vmm {
         // available to us.
 
         // Map the page directory at a known location.
-        Kernel::map(va_pdir, kva_to_pa(*kernel_pd));
+        Kernel::map_one(va_pdir, kva_to_pa(*kernel_pd), P_Writable | P_Supervisor);
 
         // Map the kernel.
-        Kernel::map(kernel_vma()
-                   ,kernel_lma()
-                   ,div_ceil(kernel_size(), page_size));
+
+        Kernel::map(kernel_text_vma()
+                   ,kva_to_pa(kernel_text_vma())
+                   ,div_ceil(kernel_text_size(), page_size)
+                   ,P_ReadOnly | P_Supervisor);
+
+        Kernel::map(kernel_rodata_vma()
+                   ,kva_to_pa(kernel_rodata_vma())
+                   ,div_ceil(kernel_rodata_size(), page_size)
+                   ,P_ReadOnly | P_Supervisor);
+
+        Kernel::map(kernel_data_vma()
+                   ,kva_to_pa(kernel_data_vma())
+                   // Include bss.
+                   ,div_ceil(kernel_end_vma().align_up(page_size).u()
+                             - kernel_data_vma().align_down(page_size).u()
+                            ,page_size)
+                   ,P_Writable | P_Supervisor);
 
         // XXX: Kernel stack is located in bootstrap code.
         //      As such, the kernel_stack sym is a LMA, not a VMA (!)
         Kernel::map(va_kernel_stack
                    ,paddr_t{&kernel_stack}
-                   ,div_ceil(kernel_stack_size, page_size));
+                   ,div_ceil(kernel_stack_size, page_size)
+                   ,P_Writable | P_Supervisor);
 
         // Load the new page directory.
         switch_pd(kernel_pd);

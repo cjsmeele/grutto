@@ -94,10 +94,23 @@ namespace Vmm {
 
     void init();
 
+    class PageFlags {
+        u32 val;
+    public:
+        constexpr operator u32() const { return val; }
+        constexpr PageFlags operator|(PageFlags o) const { return PageFlags {val | o.val}; }
+        constexpr          PageFlags()      : val{0} { }
+        constexpr explicit PageFlags(u32 x) : val{x} { }
+    };
+    static inline auto P_ReadOnly   = PageFlags {0U};
+    static inline auto P_Writable   = PageFlags {2U};
+    static inline auto P_Supervisor = PageFlags {0U};
+    static inline auto P_User       = PageFlags {4U};
+
     namespace Kernel {
-        void   map(vpage_t vp, ppage_t pp, size_t count);
+        void   map(vpage_t vp, ppage_t pp, size_t count, PageFlags flags);
         void unmap(vpage_t vp, size_t count);
-        Optional<vpage_t> map_alloc(vpage_t vp, size_t count);
+        Optional<vpage_t> map_alloc(vpage_t vp, size_t count, PageFlags flags);
     }
 
     namespace User {

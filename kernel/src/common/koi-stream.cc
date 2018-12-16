@@ -36,8 +36,8 @@ char KoiStream::get_char() {
 IoStream &KoiStream::operator()(LL loglevel) {
     if (loglevel > ll)
         return stream_dummy;
-    //if (loglevel <= LL::critical && serial.available())
-    //    return serial;
+    if (loglevel <= LL::critical && serial.available())
+        return serial;
     if (default_stream)
          return *default_stream;
     else return *this; // Welp.

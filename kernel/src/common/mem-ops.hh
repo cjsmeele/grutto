@@ -21,8 +21,6 @@
 #include "std/type-traits.hh"
 #include "std/memory.hh"
 
-extern u8 KERNEL_END[];
-
 namespace Mem {
 
     [[nodiscard]]

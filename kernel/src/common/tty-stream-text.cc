@@ -62,7 +62,8 @@ void TtyTextOutput::init_after_mem_init() {
     // The first 1M is no longer identity-mapped, we need to remap it at the right spot.
     Vmm::Kernel::map(Vmm::va_framebuffer
                     ,pa_fb
-                    ,div_ceil(width*height*2, page_size));
+                    ,div_ceil(width*height*2, page_size)
+                    ,Vmm::P_Supervisor | Vmm::P_Writable);
 
     fb = (u16*)Vmm::va_framebuffer;
 }

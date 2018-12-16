@@ -66,6 +66,8 @@ static void kmain() {
 
     Pci::init();
 
+    //((volatile u32*)0xc0000000)[0] = 1;
+
     //struct X {int x[1000];};
     //List<X> li;
     //for (int i = 0; i < 2_K; ++i)

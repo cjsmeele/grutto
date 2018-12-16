@@ -24,13 +24,25 @@ extern unusable_t BOOTSTRAP_LMA;
 extern unusable_t KERNEL_LMA;
 extern unusable_t KERNEL_VMA;
 extern unusable_t KERNEL_SIZE;
+extern unusable_t KERNEL_TEXT_VMA;
+extern unusable_t KERNEL_TEXT_SIZE;
+extern unusable_t KERNEL_RODATA_VMA;
+extern unusable_t KERNEL_RODATA_SIZE;
+extern unusable_t KERNEL_DATA_VMA;
+extern unusable_t KERNEL_END;
 extern unusable_t HEAP_START;
 //extern unusable_t page_directory;
 
-inline paddr_t bootstrap_lma() { return paddr_t {&BOOTSTRAP_LMA}; }
-inline paddr_t kernel_lma()    { return paddr_t {&KERNEL_LMA}; }
-inline vaddr_t kernel_vma()    { return vaddr_t {&KERNEL_VMA}; }
-inline size_t kernel_size()    { return (size_t)&KERNEL_SIZE; }
-inline vaddr_t heap_start()    { return vaddr_t {&HEAP_START}; }
+inline paddr_t bootstrap_lma()     { return paddr_t {&BOOTSTRAP_LMA};     }
+inline paddr_t kernel_lma()        { return paddr_t {&KERNEL_LMA};        }
+inline vaddr_t kernel_vma()        { return vaddr_t {&KERNEL_VMA};        }
+inline vaddr_t kernel_text_vma()   { return vaddr_t {&KERNEL_TEXT_VMA};   }
+inline vaddr_t kernel_rodata_vma() { return vaddr_t {&KERNEL_RODATA_VMA}; }
+inline vaddr_t kernel_data_vma()   { return vaddr_t {&KERNEL_DATA_VMA};   }
+inline vaddr_t kernel_end_vma()    { return vaddr_t {&KERNEL_END};        }
+inline size_t kernel_size()        { return (size_t)&KERNEL_SIZE;         }
+inline size_t kernel_text_size()   { return (size_t)&KERNEL_TEXT_SIZE;    }
+inline size_t kernel_rodata_size() { return (size_t)&KERNEL_RODATA_SIZE;  }
+inline vaddr_t heap_start()        { return vaddr_t {&HEAP_START};        }
 
 constexpr auto kernel_stack_size = 16_K;

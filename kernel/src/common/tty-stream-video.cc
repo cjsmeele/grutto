@@ -129,7 +129,8 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, paddr_t pa_framebuff
         // FIXME: Actually write something that allocates virtual memory.
         Vmm::Kernel::map(Vmm::va_framebuffer
                         ,pa_framebuffer
-                        ,div_ceil(w*h*(bpp/8), page_size));
+                        ,div_ceil(w*h*(bpp/8), page_size)
+                        ,Vmm::P_Supervisor | Vmm::P_Writable);
 
         fb = Vmm::va_framebuffer;
 

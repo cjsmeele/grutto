@@ -28,8 +28,9 @@ namespace Kmm {
 
         if (LIKELY(diff > 0)) {
             if (is_divisible(heap_size, page_size)) {
-                auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size),
-                                                 div_ceil(diff, page_size));
+                auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size)
+                                                ,div_ceil(diff, page_size)
+                                                ,Vmm::P_Supervisor | Vmm::P_Writable);
                 assert(vp.ok(), "could not allocate kernel heap - OOM");
 
             } else {
@@ -37,7 +38,8 @@ namespace Kmm {
                              - heap_size / page_size;
 
                 auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size).align_up(page_size)
-                                                ,extra);
+                                                ,extra
+                                                ,Vmm::P_Supervisor | Vmm::P_Writable);
                 assert(vp.ok(), "could not allocate kernel heap - OOM");
             }
         } else if (diff < 0) {
