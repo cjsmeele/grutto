@@ -35,27 +35,14 @@ namespace Vmm {
 
     pdir_t kernel_pd;
 
-    // Provided for those moments where the current page directory is not yet
-    // mapped at va_pdir, and you need to map it.
-    // This does not affect any mappings that may be made in userspace memory,
-    // so be careful to only use it during page directory switches.
-    // This is marked const because we must guarantee that no changes to the
-    // pdir are made when override_current_pdir is in effect (but it cannot be
-    // enforced by C++) - see also the ugly const_cast below.
-    //
-    // We would not need this if we had a "remap" function to replace a pdir mapping.
-    // Something to consider...
-    // (or in general: if we keep track of the type of mapping using context bits,
-    // we can safely remap the pdir at va_pdir without needing this override)
-    const pdir_t *override_current_pdir = nullptr;
+    // Always points to the current page directory.
+    pdir_t *current_pdir_ = nullptr;
 
-    pdir_t &current_pd() {
-        if (UNLIKELY(override_current_pdir != nullptr))
-             return *const_cast<pdir_t*>(override_current_pdir);
-        else return *(pdir_t*)va_pdir;
-        // if (Sched::current_task())
-        //      return *Sched::current_task()->pdir;
-        // else return kernel_pd;
+    pdir_t &current_pd() { return *current_pdir_; }
+
+    // Always returns the pagetable describing the recursive mappings.
+    ptab_t &current_rec_ptab() {
+        return *(ptab_t*)va_pts.offset(va_to_ptn(va_pts) * page_size);
     }
 
     static_assert(alignof(decltype(kernel_pd)) == page_size,
@@ -240,46 +227,36 @@ namespace Vmm {
             unmap_free(vp + i);
     }
 
-    // Map the page directory at a known location.
-    void map_pdir(const pdir_t &pdir, paddr_t pa) {
-        override_current_pdir = &pdir;
-        if (resolve_va(va_pdir).ok())
-            unmap(va_pdir);
-        map_one(va_pdir, pa, P_Writable | P_Supervisor);
-        override_current_pdir = nullptr;
-    }
-    void map_pdir(const pdir_t &pdir) {
-        // Note - passing pdir by ref/va requires a lookup - this is NOT
-        // possible while we are still on the bootstrap page dir, as that dir
-        // doesn't have itself mapped recursively.
-        auto pa = *resolve_va(*pdir);
-        map_pdir(pdir, pa);
-    }
-
-    void switch_pd(paddr_t pa) { asm_cr3(pa.u()); }
-    void switch_pd(const pdir_t &pd) {
-        // Note - passing pdir by ref/va requires a lookup - this is NOT
-        // possible while we are still on the bootstrap page dir, as that dir
-        // doesn't have itself mapped recursively.
-
+    void switch_pd(vaddr_t va, paddr_t pa) {
         CRITICAL_SCOPE();
-        //koi(LL::debug).fmt("switching pd? va {}\n", *pd);
+        current_pdir_ = va;
+        asm_cr3(pa.u());
+    }
+    void switch_pd(const pdir_t &pd) {
+        CRITICAL_SCOPE();
         auto x = *resolve_va(*pd);
-        //koi(LL::debug).fmt("switching pd to phy {}\n", x);
-        switch_pd(x);
+        //koi(LL::debug).fmt("switching pd va {} / pa {}\n", *pd, x);
+        switch_pd(*pd, x);
     }
 
     pdir_t* clone_pd() {
         auto *pdir_ = new pdir_t;
-        if (!pdir_) {
+        auto *ptab_ = new ptab_t;
+        if (!pdir_ || !ptab_) {
             koi(LL::critical).fmt("failed to allocate page directory for clone_pdir()");
             return nullptr;
         }
         pdir_t &pdir = *pdir_;
+        ptab_t &ptab = *ptab_;
         auto pdir_pa = *resolve_va(*pdir);
+        auto ptab_pa = *resolve_va(*ptab);
 
         pdir_t const &current_pdir = current_pd();
 
+        // Clone recursive pagetable.
+        ptab = current_rec_ptab();
+
+        // Populate the new page directory.
         for (size_t i = 0; i < 1_K; ++i) {
             if (i < 768) {
                 if (pde_present(current_pdir[i]))
@@ -290,16 +267,14 @@ namespace Vmm {
             } else {
                 pdir[i] = current_pdir[i];
                 // kernel ptabs need not be cloned, they are the same for all tasks.
+                // -> Except for the recursive mapping pagetable, which we clone below.
             }
         }
 
-        // Map the page directory in itself.
-        // (this may not be necessary - we can keep track of the current va
-        // of the pdir in other ways, e.g. in task structs)
-        CRITICAL_SCOPE();
-        switch_pd(pdir);
-        map_pdir(pdir);
-        switch_pd(current_pdir);
+        // - Insert new recursive pagetable into new pdir.
+        // - Map the pagetable recursively.
+        pdir[va_to_ptn(va_pts)] = make_pde_pt(ptab_pa, P_Supervisor | P_Writable);
+        ptab[va_to_ptn(va_pts)] = make_pte   (ptab_pa, P_Supervisor | P_Writable);
 
         return pdir_;
     }
@@ -328,6 +303,7 @@ namespace Vmm {
         // Note: This pd lives in the (currently) identity-mapped bootstrap area,
         // so we can safely address it using its LMA.
         auto &bootstrap_pd = *(pdir_t*)asm_cr3();
+        current_pdir_ = &bootstrap_pd;
 
         // Start building a new page directory.
         kernel_pd.clear();
@@ -386,14 +362,13 @@ namespace Vmm {
         // Next, we need to copy init_pt to the correct allocated page table.
         // (we could keep using init_pt's phy address and allocate one less phy
         // page, but this makes it more uniform).
-
-        (*(ptab_t*)va_pts.offset(va_to_ptn(va_pts) * page_size)) = init_pt;
-
-        // Map the page directory at a known location.
-        // (thereby we pretend that we are already on the new pdir)
-        map_pdir(kernel_pd, kstatic_va_to_pa(*kernel_pd));
+        current_rec_ptab() = init_pt;
 
         // With all that in place, we can now map the kernel in the new page directory.
+
+        // Note that current_pd() is still the bootstrap pdir, but it does not
+        // need to be consulted for map() calls to the kernel memory area.
+        // (basically - don't try to create user-memory mappings here)
 
         map(kernel_text_vma()
            ,kstatic_va_to_pa(kernel_text_vma())
@@ -421,12 +396,6 @@ namespace Vmm {
            ,P_Writable | P_Supervisor);
 
         // Load the new page directory.
-        // Firstly, switch by specifying the pa explicitly.
-        switch_pd(kstatic_va_to_pa(*kernel_pd));
-
-        // Secondly, switch specifying the va. The lookup should succeed now
-        // that we have switched off the bootstrap pagedir.
-        // (we do this as a sanity check - it shouldn't have any effect if we did everything right)
         switch_pd(kernel_pd);
     }
 }
