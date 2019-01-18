@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -51,7 +51,7 @@ namespace Multiboot {
         // note: this should actuall use the flags instead of checking for null
         // pointers.
 #define CHECKPTR(p,sz)                        \
-            assert(!(p) || paddr_t{p}.offset(sz).u() <= 1_M, \
+            assert(!(p) || paddr_t{(size_t)p}.offset(sz).u() <= 1_M, \
                    "multiboot info is required to reside below 1M");
 
         if (src->flags & MULTIBOOT_INFO_BOOT_LOADER_NAME)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -28,7 +28,7 @@ namespace Kmm {
 
         if (LIKELY(diff > 0)) {
             if (is_divisible(heap_size, page_size)) {
-                auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size)
+                auto vp = Vmm::map_alloc(heap_start.offset(heap_size)
                                                 ,div_ceil(diff, page_size)
                                                 ,Vmm::P_Supervisor | Vmm::P_Writable);
                 assert(vp.ok(), "could not allocate kernel heap - OOM");
@@ -37,7 +37,7 @@ namespace Kmm {
                 size_t extra = (heap_size + diff) / page_size
                              - heap_size / page_size;
 
-                auto vp = Vmm::Kernel::map_alloc(heap_start.offset(heap_size).align_up(page_size)
+                auto vp = Vmm::map_alloc(heap_start.offset(heap_size).align_up(page_size)
                                                 ,extra
                                                 ,Vmm::P_Supervisor | Vmm::P_Writable);
                 assert(vp.ok(), "could not allocate kernel heap - OOM");

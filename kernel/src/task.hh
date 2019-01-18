@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, Chris Smeele
+/* Copyright (c) 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -17,20 +17,10 @@
  */
 #pragma once
 
-#include "common/koi-stream.hh"
+#include "mem/vmm.hh"
 
-inline void dink(char c = '#', u8 attr = 0x0a) {
-    *(volatile u16*)0xb8002 = ((u16)attr << 8) | c;
-}
-
-inline void do_assert(bool assertion, const char *err = "WAAAAGH!") {
-    if (UNLIKELY(!assertion)) {
-        koi(LL::critical).fmt("Assertion failed: {}\n", err);
-        panic();
-    }
-}
-
-#define STRINGIFY2(x) #x
-#define STRINGIFY(x) STRINGIFY2(x)
-#define assert(expr, err) \
-    do_assert((expr), __FILE__ ":" STRINGIFY(__LINE__) ": { " #expr " } -> " err)
+struct task_t {
+    int id;
+    Vmm::pdir_t *pdir;  // ???
+    vaddr_t stack; // ???
+};

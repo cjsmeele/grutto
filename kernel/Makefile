@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Chris Smeele
+# Copyright (c) 2018, 2019, Chris Smeele
 #
 # This file is part of Grutto.
 #
@@ -103,6 +103,8 @@ CXXWARNINGS :=             \
 	-Wall                  \
 	-Wextra                \
 	-Wpedantic             \
+	-Werror=return-type    \
+	-Werror=unused-result  \
 	-Wshadow               \
 	-Wpointer-arith        \
 	-Wcast-align           \
@@ -143,7 +145,7 @@ CXXFLAGS :=                            \
 #-masm=intel                \
 
 LDFILE := kernel.ld
-LDLIBPATH := . /usr/lib/clang/7.0.0/lib/linux
+LDLIBPATH := . /usr/lib/clang/7.0.1/lib/linux
 LDLIBS    := clang_rt.builtins-i386
 #LDLIBS += gcc_i686
 LDFLAGS    =                      \

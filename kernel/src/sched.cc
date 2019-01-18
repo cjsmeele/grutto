@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, Chris Smeele
+/* Copyright (c) 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -15,22 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with Grutto.  If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
+#include "sched.hh"
 
-#include "common/koi-stream.hh"
 
-inline void dink(char c = '#', u8 attr = 0x0a) {
-    *(volatile u16*)0xb8002 = ((u16)attr << 8) | c;
-}
+namespace Sched {
 
-inline void do_assert(bool assertion, const char *err = "WAAAAGH!") {
-    if (UNLIKELY(!assertion)) {
-        koi(LL::critical).fmt("Assertion failed: {}\n", err);
-        panic();
+    task_t *current_task_ = nullptr;
+
+    //task_t *current_task() { return current_task_; }
+    task_t *current_task() { return nullptr; }
+
+    Queue<own_ptr<task_t>, 64> ready_queue;
+
+    void add_task(own_ptr<task_t> task) {
+
+        ready_queue.enqueue(move(task));
+    }
+
+    void switch_task() {
+        if (LIKELY(current_task)) {
+        }
     }
 }
-
-#define STRINGIFY2(x) #x
-#define STRINGIFY(x) STRINGIFY2(x)
-#define assert(expr, err) \
-    do_assert((expr), __FILE__ ":" STRINGIFY(__LINE__) ": { " #expr " } -> " err)

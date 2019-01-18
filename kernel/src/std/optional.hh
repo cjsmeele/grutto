@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -23,6 +23,10 @@ constexpr inline nullopt_t nullopt;
 
 template<typename T>
 class Optional {
+
+    static_assert(!is_pointy<T>::value,
+                  "for optional references, use regular pointers with nullptr as nullopt_t instead.");
+
     alignas(T) u8 buf[sizeof(T)];
     bool tag;
 
@@ -31,15 +35,21 @@ class Optional {
 public:
     constexpr explicit operator bool   () const { return tag; }
     constexpr                   bool ok() const { return tag; }
+
     T &operator*()   const { return *ptr(); }
 
-    T &operator=(const T &x) {
+    Optional &operator=(const T &x) {
         *ptr() = x;
         tag = true;
-        return *ptr();
+        return *this;
+    }
+
+    Optional &operator=(const nullopt_t &) {
+        tag = false;
+        return *this;
     }
 
     Optional()          : tag(false) { }
     Optional(nullopt_t) : tag(false) { }
-    Optional(T x) { (*this) = x; }
+    Optional(const T &x) { (*this) = x; }
 };

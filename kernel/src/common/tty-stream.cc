@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -40,7 +40,7 @@ void TtyStream::init_after_mem_init() {
                       ,info.framebuffer_height
                       ,info.framebuffer_bpp
                       ,info.framebuffer_pitch
-                      ,(void*)info.framebuffer_addr);
+                      ,paddr_t{(size_t)info.framebuffer_addr});
 
         if (tty_video.available()) {
              tty = &tty_video;

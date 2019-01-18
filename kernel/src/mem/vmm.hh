@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -22,33 +22,34 @@
 
 // Virtual address map:
 //
-// +------------------+ 0x0000'0000
-// | Unusable 1M      |
-// |------------------| 0x0010'0000
-// | User program     |
-// |------------------|
-// | User heap        |
-// |------------------|
-// | free             |
-// |                  |
-// |------------------| 0xc000'0000
-// | Kernel code      |
-// |------------------|
-// | Kernel data      |
-// |------------------|
-// | Kernel heap      |
-// |------------------| 0xe000'0000
-// |------------------| 0xef00'0000
-// | Framebuffer      |
-// |------------------| 0xff80'0000
-// | Cur. page tables |
-// |------------------| 0xffff'1000
-// | Kernel stack     |
-// |------------------| 0xffff'6000
-// | Cur. page dir.   |
-// |------------------|
-// | free             |
-// +------------------+
+// +--------------------+ 0x0000'0000
+// | Unusable 1M        |
+// |--------------------| 0x0010'0000
+// | User program       |
+// |--------------------|
+// | User heap          |
+// |--------------------|
+// | free               |
+// |                    |
+// |--------------------| 0xc000'0000
+// | Kernel code        |
+// |--------------------|
+// | Kernel data        |
+// |--------------------|
+// | Kernel heap        |
+// |--------------------| 0xe000'0000
+// |--------------------| 0xef00'0000
+// | Framebuffer        |
+// |--------------------| 0xff00'0000
+// | Page tables        |
+// |--------------------| 0xff40'0000
+// | Cur. page dir.     |
+// |--------------------| 0xff40'1000
+// |--------------------| 0xffff'1000
+// | Kernel stack       |
+// |--------------------| 0xffff'6000
+// | free               |
+// +--------------------+
 
 // Page tables for kernel memory (>=c0000000) are pre-allocated and mapped in
 // all address spaces.
@@ -62,20 +63,29 @@ namespace Vmm {
     using pde_t = u32;
     using pte_t = u32;
 
+    constexpr bool pde_present(pde_t pde) { return pde & 1; }
+    constexpr bool pte_present(pte_t pte) { return pte & 1; }
+
     // Note: alignas() is illegal on type-aliases (why?),
     // so we resort to using compiler-specific attributes instead.
     using pdir_t __attribute__((aligned(page_size))) = Array<pde_t,1_K>;
     using ptab_t __attribute__((aligned(page_size))) = Array<pte_t,1_K>;
 
     static_assert(alignof(pdir_t) == 4_K, "Page directory type is not aligned");
+    static_assert(sizeof(pdir_t) == 4_K);
+    static_assert(sizeof(ptab_t) == 4_K);
 
     // va_pdir always points to the current page directory.
-    constexpr auto va_pdir         = vaddr_t {0xffff6000UL};
+    constexpr auto va_pdir         = vaddr_t {0xff400000UL};
 
-    // va_pts always points to the 4M va-region containing page tables for the current task.
+    // va_pts always points to the 4M va-region where page tables for the
+    // current task are mapped.
+    // Note that each pagetable takes up 4K (one page). The pages containing
+    // kernel pagetables are always mapped. User pagetables are allocated as needed.
+    //
     // the upper ¼th is the same for all processes (kernel memory).
     // the lower ¾th differs per process.
-    constexpr auto va_pts          = vaddr_t {0xff800000UL}; // (1022ULL << 22)
+    constexpr auto va_pts          = vaddr_t {0xff000000UL}; // (1020ULL << 22)
 
     // page-aligned va of the kernel's stack.
     constexpr auto va_kernel_stack = vaddr_t {0xffff1000UL};
@@ -91,6 +101,9 @@ namespace Vmm {
     constexpr size_t va_framebuffer_max_size =          0x01000000UL;
 
     constexpr size_t va_to_ptn(vaddr_t va) { return vpage_t{va}.u() >> 10; }
+    constexpr size_t vp_to_ptn(vpage_t vp) { return vp.u() >> 10; }
+
+    Optional<paddr_t> va_to_pa(vaddr_t va);
 
     void init();
 
@@ -107,15 +120,13 @@ namespace Vmm {
     static inline auto P_Supervisor = PageFlags {0U};
     static inline auto P_User       = PageFlags {4U};
 
-    namespace Kernel {
-        void   map(vpage_t vp, ppage_t pp, size_t count, PageFlags flags);
-        void unmap(vpage_t vp, size_t count);
-        Optional<vpage_t> map_alloc(vpage_t vp, size_t count, PageFlags flags);
-    }
+    void   map(vpage_t vp, ppage_t pp, size_t count, PageFlags flags);
+    void unmap(vpage_t vp, size_t count);
+    Optional<vpage_t> map_alloc(vpage_t vp, size_t count, PageFlags flags);
 
-    namespace User {
-        // Safe user-mode API.
+    void switch_pd(paddr_t pa);
+    void switch_pd(const pdir_t &pd);
 
-        //void map(vpage_t vn, size_t count);
-    }
+    [[nodiscard]]
+    pdir_t* clone_pd();
 }

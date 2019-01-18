@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -33,8 +33,8 @@ extern unusable_t KERNEL_END;
 extern unusable_t HEAP_START;
 //extern unusable_t page_directory;
 
-inline paddr_t bootstrap_lma()     { return paddr_t {&BOOTSTRAP_LMA};     }
-inline paddr_t kernel_lma()        { return paddr_t {&KERNEL_LMA};        }
+inline paddr_t bootstrap_lma()     { return paddr_t {(size_t)&BOOTSTRAP_LMA};     }
+inline paddr_t kernel_lma()        { return paddr_t {(size_t)&KERNEL_LMA};        }
 inline vaddr_t kernel_vma()        { return vaddr_t {&KERNEL_VMA};        }
 inline vaddr_t kernel_text_vma()   { return vaddr_t {&KERNEL_TEXT_VMA};   }
 inline vaddr_t kernel_rodata_vma() { return vaddr_t {&KERNEL_RODATA_VMA}; }

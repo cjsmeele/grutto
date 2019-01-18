@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -66,33 +66,32 @@ static void kmain() {
 
     Pci::init();
 
-    //((volatile u32*)0xc0000000)[0] = 1;
+    {
+        auto *pd = Vmm::clone_pd();
+        koi(LL::debug).fmt("ik switch naar pdir va:{} pa:{})\n\n", pd, *Vmm::va_to_pa(vaddr_t{pd}));
+        Vmm::switch_pd(*pd);
+    }
 
-    //struct X {int x[1000];};
-    //List<X> li;
-    //for (int i = 0; i < 2_K; ++i)
-    //    li.append(X{i});
+    RESDECLT_(hoofd, hoofd, u8);
+    u8 *buf = hoofd;
+    assert(vaddr_t{buf}.is_aligned(page_size), "head not aligned");
+    paddr_t tgt = *Vmm::va_to_pa(buf);
+    koi.fmt("tgt {}\n", tgt);
+    Vmm::map(vpage_t{1_M>>12}, tgt, div_ceil(hoofd_size, page_size)+6, Vmm::P_Writable);
 
-    //RESDECLT_(hoofd, hoofd, u8);
-    //u8 *buf = hoofd;
-    //assert(is_aligned(buf, Vmm::granularity), "head not aligned");
-    //auto tgt = Vmm::va_to_klma(buf);
-    //Vmm::map_pages(1_M>>12, tgt>>12, div_ceil(hoofd_size, Vmm::granularity));
-    //auto fn = (int(*)())(u8*)1_M;
-    //auto zzz = fn();
-    //koi.fmt("result: {}\n", zzz);
+    koi.fmt("result: {}\n", ((int(*)())(u32*)1_M)()); // ¯\_(ツ)_/¯
 
     auto start_time = uptime();
-    for (u64 i = 0;; ++i) {
-        auto up = 10050_ms - uptime();
-        koi.fmt("\r[{6}.{02}] {} ",
-                time_s(up), time_ms(up)/10 % 100,
-                "/-\\|"[i/2%4]);
-        ksleep(50_ms);
+     for (u64 i = 0;; ++i) {
+         auto up = 10050_ms - uptime();
+         koi.fmt("\r[{6}.{02}] {} ",
+                 time_s(up), time_ms(up)/10 % 100,
+                 "/-\\|"[i/2%4]);
+         ksleep(50_ms);
 
-        if (uptime() - start_time > 10_s)
-            trap(0xe0fe0f88);
-    }
+         if (uptime() - start_time > 10_s)
+             trap(0xe0fe0f88);
+     }
 }
 
 /// Kernel entrypoint.

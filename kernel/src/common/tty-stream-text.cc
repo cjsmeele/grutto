@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -60,10 +60,10 @@ void TtyTextOutput::put_string(const char *s) {
 
 void TtyTextOutput::init_after_mem_init() {
     // The first 1M is no longer identity-mapped, we need to remap it at the right spot.
-    Vmm::Kernel::map(Vmm::va_framebuffer
-                    ,pa_fb
-                    ,div_ceil(width*height*2, page_size)
-                    ,Vmm::P_Supervisor | Vmm::P_Writable);
+    Vmm::map(Vmm::va_framebuffer
+            ,pa_fb
+            ,div_ceil(width*height*2, page_size)
+            ,Vmm::P_Supervisor | Vmm::P_Writable);
 
     fb = (u16*)Vmm::va_framebuffer;
 }

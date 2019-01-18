@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -29,8 +29,8 @@ inline u32  asm_cr2() { u32 x; asm volatile ("mov %%cr2, %0": "=a"(x)); return x
 inline u32  asm_cr3() { u32 x; asm volatile ("mov %%cr3, %0": "=a"(x)); return x; }
 inline u32  asm_cr4() { u32 x; asm volatile ("mov %%cr4, %0": "=a"(x)); return x; }
 
-inline void asm_cr3(u32 x) {   asm volatile ("mov %0, %%cr3" :: "b" (x)); }
-inline void asm_cr4(u32 x) {   asm volatile ("mov %0, %%cr4" :: "b" (x)); }
+inline void asm_cr3(u32 x) {   asm volatile ("mov %0, %%cr3" :: "b" (x) : "memory" ); }
+inline void asm_cr4(u32 x) {   asm volatile ("mov %0, %%cr4" :: "b" (x) : "memory" ); }
 
 [[noreturn]]
 inline void hang() { while (true) { asm_cli(); asm_hlt(); } }

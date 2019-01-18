@@ -1,9 +1,7 @@
-#+TITLE:  Het BesturingsSysteem
+#+TITLE:  Grutto
 #+AUTHOR: Chris Smeele
 
 * Inleiding
-
-Ik maak een OS omdat ik dat leuk vind.
 
 Hoe te starten:
 

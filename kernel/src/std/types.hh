@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -34,10 +34,11 @@ using s64 =   signed long long;
 using size_t    = u32;
 using ptrdiff_t = s32;
 
-// Compile-time integer type.
-template<size_t I> struct int_ { static constexpr size_t value = I; };
-
+#include "draken.hh"
 #include "literals.hh"
+
+using tag_physical_t = tt::uint<1>;
+using tag_virtual_t  = tt::uint<2>;
 
 /**
  * Address type.
@@ -80,10 +81,21 @@ public:
         else      return *this;
     }
 
+    inline constexpr bool operator==(addr_base_t o) const { return x == o.x; }
+
     // Constructors.
     inline addr_base_t () = default;
     template<typename T>
-    inline addr_base_t (const T *p)  : x(reinterpret_cast<type>(p)) { }
+    inline addr_base_t (const T *p)  : x(reinterpret_cast<type>(p)) {
+        // Constructing a paddr_t from a pointer is almost always a bad idea.
+        // This is ugly - we should be able to use enable_if or something.
+        //static_assert(is_same<T,tag_virtual_t>::value,
+        static_assert(tt::run<tt::equal<>,Tag,tag_virtual_t>::value,
+                      "tried to construct non-virtual addr-type from a pointer");
+        // Calling in the dragons may be a bit overkill, but tt::equal is the only
+        // type-traity thing we have that does not depend on *this* header.
+        // ¯\_(ツ)_/¯
+    }
     template<typename T, typename... As>
     inline addr_base_t (T(p)(As...)) : x(reinterpret_cast<type>(p)) { }
 
@@ -129,9 +141,6 @@ public:
              inline constexpr page_base_t (const page_base_t &o) : x(o.x)  { }
              inline           page_base_t &operator=(const page_base_t &o) { x = o.x; return *this; }
 };
-
-using tag_physical_t = int_<1>;
-using tag_virtual_t  = int_<2>;
 
 using paddr_t = addr_base_t<tag_physical_t>;
 using vaddr_t = addr_base_t<tag_virtual_t>;

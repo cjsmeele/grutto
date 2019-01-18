@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -37,7 +37,10 @@ namespace Mem {
     void *kcalloc(size_t size) { return dlcalloc(size, 1); }
 }
 
-void *operator new(size_t size)    { return Mem::kmalloc(size); }
-void *operator new[](size_t size)  { return Mem::kmalloc(size); }
-void  operator delete(void *ptr)   { Mem::kfree(ptr); }
-void  operator delete[](void *ptr) { Mem::kfree(ptr); }
+void *operator new(size_t size)               { return Mem::kmalloc(size); }
+void *operator new[](size_t size)             { return Mem::kmalloc(size); }
+void  operator delete(void *ptr)              { Mem::kfree(ptr); }
+void  operator delete[](void *ptr)            { Mem::kfree(ptr); }
+
+namespace std { enum class align_val_t : size_t {}; }
+void *operator new(size_t size, std::align_val_t align) { return Mem::kmalloc(size, static_cast<size_t>(align)); }

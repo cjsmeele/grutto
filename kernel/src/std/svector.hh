@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -20,7 +20,7 @@
 // Fixed capacity vector
 
 template<typename T, size_t Cap>
-class SVector {
+class FixedVector {
     struct null_item_t { char _; };
     union Item {
         null_item_t _;
@@ -48,7 +48,7 @@ public:
     constexpr       T *end()         { return data() + length(); }
 
     // enable if...
-    constexpr bool operator==(const SVector<T,Cap> &o) const {
+    constexpr bool operator==(const FixedVector<T,Cap> &o) const {
         if (length() != o.length())
             return false;
         for (size_t i = 0; i < length(); ++i) {
@@ -72,7 +72,7 @@ public:
     constexpr auto map(F f) const {
         //using FT = result_of...
         using FT = size_t;
-        SVector<FT, Cap> o;
+        FixedVector<FT, Cap> o;
         for (const auto &x : *this)
             o.push(f(x));
         return o;
@@ -97,3 +97,6 @@ public:
         return x;
     }
 };
+
+template<typename T, size_t Cap>
+using SVector = FixedVector<T, Cap>;

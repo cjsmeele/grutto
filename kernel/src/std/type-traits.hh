@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -41,6 +41,19 @@ template<>           struct is_float<long double> { static constexpr bool value 
 template<typename T> struct is_signed   { static constexpr bool value = static_cast<T>(-1) < static_cast<T>(0); };
 template<typename T> struct is_unsigned { static constexpr bool value = !is_signed<T>::value; };
 
+template<typename T> struct is_reference     { static constexpr bool value = false; };
+template<typename T> struct is_reference<T&> { static constexpr bool value = true;  };
+
+template<typename T> struct is_pointer     { static constexpr bool value = false; };
+template<typename T> struct is_pointer<T*> { static constexpr bool value = true;  };
+
+template<typename T> struct is_pointy     { static constexpr bool value = false; };
+template<typename T> struct is_pointy<T&> { static constexpr bool value = true;  };
+template<typename T> struct is_pointy<T*> { static constexpr bool value = true;  };
+
+template<typename T> struct is_volatile             { static constexpr bool value = false; };
+template<typename T> struct is_volatile<volatile T> { static constexpr bool value = true;  };
+
 template<typename T1, typename T2> struct is_same         { static constexpr bool value = false; };
 template<typename T1>              struct is_same<T1, T1> { static constexpr bool value = true;  };
 
@@ -64,6 +77,9 @@ template<typename T> struct remove_volatile<volatile T> { using type = T; };
 template<typename T> struct remove_cv {
     using type = typename remove_volatile<typename remove_const<T>::type>::type;
 };
+
+template<typename T> struct remove_ref                  { using type = T; };
+template<typename T> struct remove_ref<T&>              { using type = T; };
 
 template<bool, typename T> struct enable_if          { };
 template<typename T>       struct enable_if<true, T> { using type = T; };

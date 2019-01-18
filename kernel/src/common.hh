@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -21,11 +21,13 @@
 #define COMMON_HH_INCLUDED
 
 #include "std/stdcommon.hh"
+#include "std/draken.hh"
 #include "std/types.hh"
 #include "std/type-traits.hh"
 #include "std/compiler.hh"
 #include "std/literals.hh"
 #include "std/memory.hh"
+#include "std/pointer.hh"
 #include "std/math.hh"
 #include "std/tuple.hh"
 #include "std/optional.hh"
@@ -34,6 +36,7 @@
 #include "std/array.hh"
 #include "std/svector.hh"
 #include "std/list.hh"
+#include "std/queue.hh"
 #include "std/bitmap.hh"
 
 #include "common/asm.hh"

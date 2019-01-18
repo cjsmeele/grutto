@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -127,10 +127,10 @@ void TtyVideoOutput::init(u32 w, u32 h, u32 bpp, u32 pitch, paddr_t pa_framebuff
         assert(w*h*(bpp/8) < Vmm::va_framebuffer_max_size, "framebuffer too large");
 
         // FIXME: Actually write something that allocates virtual memory.
-        Vmm::Kernel::map(Vmm::va_framebuffer
-                        ,pa_framebuffer
-                        ,div_ceil(w*h*(bpp/8), page_size)
-                        ,Vmm::P_Supervisor | Vmm::P_Writable);
+        Vmm::map(Vmm::va_framebuffer
+                ,pa_framebuffer
+                ,div_ceil(w*h*(bpp/8), page_size)
+                ,Vmm::P_Supervisor | Vmm::P_Writable);
 
         fb = Vmm::va_framebuffer;
 
