@@ -25,6 +25,7 @@
 #include "mem/vmm.hh"
 #include "mem/kmm.hh"
 #include "pci.hh"
+#include "initrd.hh"
 
 // nnoremap <F5> :w \| split \| terminal make -Bj8 && make -C.. run NOVGA=1<CR>
 //register int sp asm ("sp");
@@ -72,26 +73,29 @@ static void kmain() {
         Vmm::switch_pd(*pd);
     }
 
-    RESDECLT_(hoofd, hoofd, u8);
-    u8 *buf = hoofd;
-    assert(vaddr_t{buf}.is_aligned(page_size), "head not aligned");
-    paddr_t tgt = *Vmm::va_to_pa(buf);
-    koi.fmt("tgt {}\n", tgt);
-    Vmm::map(vpage_t{1_M>>12}, tgt, div_ceil(hoofd_size, page_size)+6, Vmm::P_Writable);
+    RESDECLT_(initrd, initrd, u8);
+    Initrd::init(initrd, initrd_size);
+    Initrd::dump();
 
-    koi.fmt("result: {}\n", ((int(*)())(u32*)1_M)()); // ¯\_(ツ)_/¯
+    // u8 *buf = _;
+    // assert(vaddr_t{buf}.is_aligned(page_size), "not aligned");
+    // paddr_t tgt = *Vmm::va_to_pa(buf);
+    // koi.fmt("tgt {}\n", tgt);
+    // Vmm::map(vpage_t{1_M>>12}, tgt, div_ceil(_size, page_size)+6, Vmm::P_Writable);
+
+    // koi.fmt("result: {}\n", ((int(*)())(u32*)1_M)()); // ¯\_(ツ)_/¯
 
     auto start_time = uptime();
-     for (u64 i = 0;; ++i) {
-         auto up = 10050_ms - uptime();
-         koi.fmt("\r[{6}.{02}] {} ",
-                 time_s(up), time_ms(up)/10 % 100,
-                 "/-\\|"[i/2%4]);
-         ksleep(50_ms);
+    for (u64 i = 0;; ++i) {
+        auto up = 10050_ms - uptime();
+        koi.fmt("\r[{6}.{02}] {} ",
+                time_s(up), time_ms(up)/10 % 100,
+                "/-\\|"[i/2%4]);
+        ksleep(50_ms);
 
-         if (uptime() - start_time > 10_s)
-             trap(0xe0fe0f88);
-     }
+        if (uptime() - start_time > 10_s)
+            trap(0xe0fe0f88);
+    }
 }
 
 /// Kernel entrypoint.
