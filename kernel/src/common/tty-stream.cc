@@ -24,6 +24,9 @@ void TtyStream::put_char(char c) {
 void TtyStream::put_string(const char *s) {
     if (tty) tty->put_string(s);
 }
+void TtyStream::put(const char *s, size_t n) {
+    if (tty) tty->put(s, n);
+}
 char TtyStream::get_char() {
     // We should be talking to some keyboard driver.
     hang();
@@ -48,6 +51,8 @@ void TtyStream::init_after_mem_init() {
             // We are in some video mode, but we are unable to use it.
             // Trying to use it as text mode will not be possible.
             tty = nullptr;
+
+            koi(LL::warning).fmt("A video mode was set, but the tty-video driver is unable to handle it.\n");
         }
     } else {
         // Keep using text mode.

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -65,6 +65,20 @@ constexpr void fmt2(F fn, Fmtflags &f, const char *a) {
     if (f.align_left && pad > 0)
         fmtpad(fn, ' ', pad);
 }
+template<typename F>
+constexpr void fmt2(F fn, Fmtflags &f, string_view a) {
+
+    int pad = f.width ? f.width - (int)a.length() : 0;
+
+    if (!f.align_left && pad > 0)
+        fmtpad(fn, ' ', pad);
+
+    fn(a.data(), a.length());
+
+    if (f.align_left && pad > 0)
+        fmtpad(fn, ' ', pad);
+}
+
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, char c) {
     if (f.repeat) {
         for (int i = 0; i < f.width; ++i)

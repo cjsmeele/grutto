@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -49,6 +49,15 @@ public:
         if (LIKELY(port)) {
             CRITICAL_SCOPE();
             while (*s)
+                put_char_(*(s++));
+        }
+    }
+
+    void put(const char *s, size_t n) {
+
+        if (LIKELY(port)) {
+            CRITICAL_SCOPE();
+            while (n--)
                 put_char_(*(s++));
         }
     }

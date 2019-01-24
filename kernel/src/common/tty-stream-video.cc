@@ -81,6 +81,10 @@ void TtyVideoOutput::put_string(const char *s) {
     while (*s)
         put_char(*(s++));
 }
+void TtyVideoOutput::put(const char *s, size_t n) {
+    while (n--)
+        put_char(*(s++));
+}
 
 void TtyVideoOutput::clear() {
     Mem::set(fb, bg2, width*height);

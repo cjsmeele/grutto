@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -25,6 +25,10 @@ void KoiStream::put_char(char c) {
 void KoiStream::put_string(const char *s) {
     if (LIKELY(!!default_stream))
         default_stream->put_string(s);
+}
+void KoiStream::put(const char *s, size_t count) {
+    if (LIKELY(!!default_stream))
+        default_stream->put(s, count);
 }
 char KoiStream::get_char() {
     if (LIKELY(!!default_stream))

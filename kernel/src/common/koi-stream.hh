@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -41,6 +41,7 @@ class KoiStream : public IoStream {
 public:
     void put_char(char c);
     void put_string(const char *s);
+    void put(const char *s, size_t count);
     char get_char();
 
     IoStream &operator()(LL loglevel);

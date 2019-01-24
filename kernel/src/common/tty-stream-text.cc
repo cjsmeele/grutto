@@ -57,6 +57,10 @@ void TtyTextOutput::put_string(const char *s) {
     while (*s)
         put_char(*(s++));
 }
+void TtyTextOutput::put(const char *s, size_t n) {
+    while (n--)
+        put_char(*(s++));
+}
 
 void TtyTextOutput::init_after_mem_init() {
     // The first 1M is no longer identity-mapped, we need to remap it at the right spot.

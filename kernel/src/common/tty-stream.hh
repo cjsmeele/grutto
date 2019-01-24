@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -35,6 +35,7 @@ class TtyTextOutput : public OStream {
 public:
     void put_char(char c);
     void put_string(const char *s);
+    void put(const char *s, size_t count);
 
     void init_after_mem_init();
     void init();
@@ -74,6 +75,7 @@ public:
 
     void put_char(char c);
     void put_string(const char *s);
+    void put(const char *s, size_t count);
 
     void init(u32 width, u32 height, u32 bpp, u32 pitch, paddr_t pa_framebuffer);
 };
@@ -90,6 +92,7 @@ public:
 
     void put_char(char c);
     void put_string(const char *s);
+    void put(const char *s, size_t count);
     char get_char();
 
     void init_after_mem_init();

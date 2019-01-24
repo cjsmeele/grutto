@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -27,13 +27,15 @@ class OStream {
 
     struct FmtCallback {
         OStream &os;
-        void operator()(char c)        { os.put_char(c);   }
-        void operator()(const char *s) { os.put_string(s); }
+        void operator()(char c)                  { os.put_char(c);   }
+        void operator()(const char *s)           { os.put_string(s); }
+        void operator()(const char *s, size_t n) { os.put(s, n);     }
     };
 
 public:
     virtual void put_char(char c) = 0;
     virtual void put_string(const char *c);
+    virtual void put(const char *s, size_t count);
 
     template<typename... As>
     void fmt(const char *s, const As&... as) {
@@ -46,29 +48,14 @@ public:
     virtual char get_char() = 0;
 };
 
-class IoStream : public IStream, public OStream {
-};
+class IoStream : public IStream, public OStream { };
 
 class DummyStream : public IoStream {
 public:
     void put_char(char c) { }
     void put_string(const char *c) { }
+    void put(const char *s, size_t count) { }
     char get_char() { stdfail(); }
 };
 
 extern DummyStream stream_dummy;
-
-
-[[deprecated]] OStream &operator<<(OStream &io, char c);
-[[deprecated]] OStream &operator<<(OStream &io, const char *s);
-
-[[deprecated]] OStream &operator<<(OStream &io, u64 n);
-[[deprecated]] OStream &operator<<(OStream &io, s64 n);
-[[deprecated]] OStream &operator<<(OStream &io, u32 n);
-[[deprecated]] OStream &operator<<(OStream &io, s32 n);
-[[deprecated]] OStream &operator<<(OStream &io, u16 n);
-[[deprecated]] OStream &operator<<(OStream &io, s16 n);
-[[deprecated]] OStream &operator<<(OStream &io, const void *ptr);
-
-[[deprecated]] IStream &operator>>(IStream &io, char &c);
-
