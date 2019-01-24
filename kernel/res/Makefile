@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Chris Smeele
+# Copyright (c) 2018, 2019, Chris Smeele
 #
 # This file is part of Grutto.
 #
@@ -15,15 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Grutto.  If not, see <https://www.gnu.org/licenses/>.
 
-.PHONY: all
+include resource-names.make
 
-all: font.bin grutto_small.bin
+RESOURCE_BINS := $(RESOURCE_NAMES:%=%.bin)
 
-#banner.bin: banner.txt
-#	printf "\x00" | cat $< - > $@
+.PHONY: all clean
 
-#font-grid.pbm: font-grid.png
-#	convert $< $@
+all: $(RESOURCE_BINS)
+
+initrd.bin: ../../initrd/initrd.bin
+	cp $< $@
 
 font.bin: font-grid.pbm
 	mkdir -p tmp
@@ -34,3 +35,6 @@ font.bin: font-grid.pbm
 
 grutto_small.bin: grutto2-small.png
 	convert $< -color-matrix "0 0 1, 0 1 0, 1 0 0" rgba:$@
+
+clean:
+	rm -f $(RESOURCE_BINS)

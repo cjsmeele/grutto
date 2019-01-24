@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Chris Smeele
+# Copyright (c) 2018, 2019, Chris Smeele
 #
 # This file is part of Grutto.
 #
@@ -25,8 +25,9 @@ E := @true
 else
 Q := @
 E := @echo 
-MAKEFLAGS += --no-print-directory
 endif
+
+MAKEFLAGS += --no-print-directory
 
 TARGET ?= i686
 export TARGET
@@ -46,7 +47,8 @@ NAME_VERSION := $(NAME)-$(VERSION)
 # }}}
 # Directories {{{
 
-KERNELDIR := kernel
+KERNEL_DIR := kernel
+INITRD_DIR := initrd
 
 # }}}
 # Source and intermediate files {{{
@@ -55,11 +57,12 @@ KERNELDIR := kernel
 # }}}
 # Output files {{{
 
-BINFILE := $(KERNELDIR)/bin/$(NAME).elf
+BINFILE := $(KERNEL_DIR)/bin/$(NAME).elf
+INITRD  := $(INITRD_DIR)/initrd.bin
 
 # }}}
 
-.PHONY: all doc clean disk kernel
+.PHONY: all doc clean disk kernel initrd
 
 all: kernel
 
@@ -67,14 +70,21 @@ all: kernel
 
 # Make targets {{{
 
-$(BINFILE): kernel
+#$(BINFILE): kernel
 
-kernel:
-	$(MAKE) -C $(KERNELDIR)
+# NB: Currently the initrd is embedded into the kernel image.
+#     Ideally, the bootloader would load it at some page-aligned address for us
+#     so that we can reclaim that space.
+kernel: initrd
+	$(MAKE) -C $(KERNEL_DIR)
+
+initrd:
+	$(MAKE) -C $(INITRD_DIR)
 
 clean:
 	$(E) "  CLEAN"
-	$(MAKE) -C $(KERNELDIR) clean
+	$(MAKE) -C $(KERNEL_DIR) clean
+	$(MAKE) -C $(INITRD_DIR) clean
 	rm -f $(DISK_FILE)
 
 
@@ -129,20 +139,20 @@ GDB := gdb
 
 GDBFLAGS := -q -n -x gdbrc32
 
-# nb: dep on kernel needed to avoid 2-step build.
-run: kernel $(DISK_FILE)
+run: disk
 	$(E) "  QEMU     $<"
 	$(Q)$(QEMU) $(QEMUFLAGS)
 
-fast: kernel $(DISK_FILE)
+fast: disk
 	$(E) "  QEMU     $<"
 	$(Q)$(QEMU) $(QEMUFLAGS_FAST)
 
-run-debug: $(DISK_FILE)
+run-debug: disk
 	$(E) "  QEMU     $<"
 	$(Q)$(QEMU) $(QEMUFLAGS_DEBUG)
 
-disk: $(DISK_FILE)
+disk: kernel
+	$(Q)$(MAKE) $(DISK_FILE)
 
 $(DISK_FILE): $(STAGE1_MBR_BIN) $(STAGE2_BIN) $(BINFILE) $(LOADER_RCFILE)
 	$(E) ""

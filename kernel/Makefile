@@ -67,7 +67,9 @@ ASMFILES := $(shell find src -name '*.asm')
 CXXFILES := $(shell find src -name '*.cc')
 HFILES   := $(shell find src -name '*.hh')
 PCHDEPS  := $(shell find src/common src/std -name '*.hh')
-RESFILES := $(shell find res -name '*.bin')
+
+include $(RESDIR)/resource-names.make
+RESFILES := $(RESOURCE_NAMES:%=$(RESDIR)/%.bin)
 
 LDFILE := kernel.ld
 
@@ -193,6 +195,8 @@ bin: res $(BINFILE)
 res:
 	$(MAKE) -C res
 
+$(RESFILES): res
+
 $(BINFILE): $(OBJFILES) $(LDFILE)
 	$(E) "  LD   $@"
 	$(Q)mkdir -p $(@D) && $(LD) -o $@ $(OBJFILES) $(LDFLAGS)
@@ -219,6 +223,7 @@ $(OBJDIR)/res-%.o: $(RESDIR)/%.bin
 
 clean:
 	$(E) "  CLEAN    $(OUTFILES)"
+	$(Q)$(MAKE) -C res clean
 	$(Q)rm -f $(OUTFILES)
 
 # }}}

@@ -24,6 +24,11 @@ constexpr size_t strlen(const char *str) {
     while (str[i]) ++i;
     return i;
 }
+constexpr size_t strnlen(const char *str, size_t n) {
+    size_t i = 0;
+    while (i < n && str[i]) ++i;
+    return i;
+}
 
 class string_view {
     size_t length_;
@@ -60,11 +65,17 @@ constexpr size_t strlen(string_view str) {
 }
 
 constexpr bool streq(const char *s1, const char *s2) {
-    while (*s1 && *s2 && *s1++ == *s2++);
+    while (*s1 && *s2 && *s1 == *s2) s1++, s2++;
     return *s1 == *s2;
 }
+constexpr bool strneq(const char *s1, const char *s2, size_t n) {
+    if (UNLIKELY(n == 0)) return true;
+    while (--n && *s1 && *s1 == *s2) s1++, s2++;
+    return *s1 == *s2;
+}
+
 constexpr bool str_prefix_of(const char *prefix, const char *s2) {
-    while (*prefix && *s2 && *prefix++ == *s2++);
+    while (*prefix && *s2 && *prefix == *s2) prefix++, s2++;
     return !*prefix || *prefix == *s2;
 }
 

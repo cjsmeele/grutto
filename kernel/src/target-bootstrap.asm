@@ -1,4 +1,4 @@
-;; Copyright (c) 2018, Chris Smeele
+;; Copyright (c) 2018, 2019, Chris Smeele
 ;;
 ;; This file is part of Grutto.
 ;;
@@ -136,11 +136,6 @@ page_table_0:                   ; 0x0000.0000 - 0x0040.0000
     times 1024 dd 0
 
 page_table_768:                 ; 0xc000.0000 - 0xc040.0000
-    times 1024 dd 0
-
-page_table_1012:                ; 0xfd00.0000
-    times 1024 dd 0
-page_table_1013:                ; 0xfd40.0000
     times 1024 dd 0
 
 page_table_1023:                ; 0xffc0.0000 - 0x0000.0000
