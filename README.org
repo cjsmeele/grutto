@@ -7,4 +7,4 @@ Hoe te starten:
 
 : make -j4 run SERIAL_IO=1
 
-(vereist yasm, clang, lld, mtools, perl 5.10.1, en qemu)
+(vereist yasm, clang, lld, mtools, perl 5.10.1, imagemagick en qemu)
