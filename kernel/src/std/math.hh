@@ -19,6 +19,7 @@
 
 #include "types1.hh"
 #include "type-traits1.hh"
+#include "optional.hh"
 
 // Naive, unoptimized math functions.
 
@@ -127,18 +128,6 @@ constexpr u8 trailing_1s(N x) {
     return trailing_0s(static_cast<N>(~x));
 }
 
-template<typename N, typename M>
-constexpr bool add_overflows(N x, M y) {
-    using namespace tt;
-    using result_t = run<if_<map<sizeof_<>, gt<>>,
-                             const_<N>,
-                             const_<M>>,
-                         N, M>;
-
-    result_t z;
-    return __builtin_add_overflow(x, y, &z);
-}
-
 template<typename N> constexpr bool is_even(N x) { return (x & 1) == 0; }
 template<typename N> constexpr bool is_odd (N x) { return (x & 1) == 1; }
 template<typename N, typename M>
@@ -180,6 +169,35 @@ template<typename N, typename M> constexpr N div_floor(N x, M y) {
     return x / y;
 }
 
+template<typename N, typename M>
+constexpr bool add_overflows(N x, M y) {
+    decltype(x + y) z;
+    return __builtin_add_overflow(x, y, &z);
+}
+
+template<typename N, typename M>
+constexpr auto safe_add(N x, M y) -> Optional<N> {
+    N z;
+    if (UNLIKELY(__builtin_add_overflow(x, y, &z)))
+         return nullopt;
+    else return z;
+}
+
+template<typename N, typename M>
+constexpr auto safe_sub(N x, M y) -> Optional<N> {
+    N z;
+    if (UNLIKELY(__builtin_sub_overflow(x, y, &z)))
+         return nullopt;
+    else return z;
+}
+
+template<typename N, typename M>
+constexpr auto safe_mul(N x, M y) -> Optional<N> {
+    N z;
+    if (UNLIKELY(__builtin_mul_overflow(x, y, &z)))
+         return nullopt;
+    else return z;
+}
 
 
 // FP stuff.
