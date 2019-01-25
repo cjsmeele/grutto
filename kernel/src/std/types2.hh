@@ -210,3 +210,11 @@ struct span_t {
 // (will resolve to the underlying integer type)
 template<typename Tag>
 span_t(addr_base_t<Tag>, size_t) -> span_t<typename addr_base_t<Tag>::type>;
+
+// Create a span, but only if it fits the bounds of T.
+template<typename T>
+Optional<span_t<T>> make_span(T start, size_t size) {
+    auto span = span_t { start, size };
+    if (span.valid()) return span;
+    else              return nullopt;
+}

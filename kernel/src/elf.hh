@@ -17,11 +17,10 @@
  */
 #pragma once
 
-// This makes me happy.
+#include "common.hh"
 
-#define λ(...)   ([&]()               { return (__VA_ARGS__); })
-#define λ_(...)  ([&](auto)           { return (__VA_ARGS__); })
-#define λx(...)  ([&](auto x)         { return (__VA_ARGS__); })
-#define λy(...)  ([&](auto y)         { return (__VA_ARGS__); })
-#define λz(...)  ([&](auto z)         { return (__VA_ARGS__); })
-#define λxy(...) ([&](auto x, auto y) { return (__VA_ARGS__); })
+namespace Elf {
+
+    [[nodiscard]] Optional<vaddr_t> load(vaddr_t elf_base, size_t elf_size);
+
+}

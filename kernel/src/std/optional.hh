@@ -72,6 +72,13 @@ public:
         else     return f();
     }
 
+    template<typename F>
+    auto require(F f) -> Optional {
+        if (tag) return f(const_cast<const T&>(**this)) ? *this : nullopt;
+        else     return nullopt;
+    }
+
+
     Optional()          : tag(false) { }
     Optional(nullopt_t) : tag(false) { }
     Optional(const T &x) { (*this) = x; }
