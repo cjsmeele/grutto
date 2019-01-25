@@ -1,6 +1,7 @@
 /dep
 /bin
 /obj
+/deps.make
 *.pch
 *.elf
 *.bin

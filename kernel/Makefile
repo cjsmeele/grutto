@@ -175,19 +175,23 @@ OBJNAMES := $(ASMFILES:$(SRCDIR)/%.asm=%) \
 			$(RESFILES:$(RESDIR)/%.bin=res-%)
 OBJFILES := $(OBJNAMES:%=$(OBJDIR)/%.o)
 DEPFILES := $(CXXFILES:$(SRCDIR)/%.cc=$(DEPDIR)/%.d)
+DEPFILE  := deps.make
 PCHFILE  := $(SRCDIR)/common.hh.pch
 
 # }}}
 
-OUTFILES = $(OBJFILES) $(PCHFILE) $(DEPFILES) $(BINFILE) $(MAPFILE)
+OUTFILES = $(OBJFILES) $(PCHFILE) $(DEPFILES) $(DEPFILE) $(BINFILE) $(MAPFILE)
 
 # Make targets {{{
 
 dep: $(DEPFILES)
 
+$(DEPFILE): $(DEPFILES)
+	cat $^ > $@
+
 # Include generated dependencies if we're compiling or linking.
 ifeq (,$(filter $(MAKECMDGOALS),dep doc res clean))
--include $(CXXFILES:$(SRCDIR)/%.cc=$(DEPDIR)/%.d)
+-include $(DEPFILE)
 endif
 
 bin: res $(BINFILE)
