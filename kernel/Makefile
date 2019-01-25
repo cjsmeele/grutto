@@ -17,7 +17,7 @@
 
 # Parameters {{{
 
-VERBOSE:=1
+#VERBOSE:=1
 
 ifdef VERBOSE
 Q :=

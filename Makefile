@@ -17,7 +17,7 @@
 
 # Parameters {{{
 
-VERBOSE := 1
+#VERBOSE := 1
 
 ifdef VERBOSE
 Q :=
@@ -106,11 +106,11 @@ STAGE2_BIN     ?= stoomboot-stage2.bin
 #STAGE1_MBR_BIN := stoomboot/stage1/bin/stoomboot-stage1-mbr.bin
 #STAGE2_BIN     := stoomboot/stage2/bin/stoomboot-stage2.bin
 
-#QEMU    ?= qemu-system-i386
-QEMU    ?= qemu-system-x86_64
+QEMU    ?= qemu-system-i386
+#QEMU    ?= qemu-system-x86_64
 GDB     ?= gdb
 
-QEMUMEM ?= 512
+QEMUMEM ?= 256
 
 #QEMUFLAGS       := -m $(QEMUMEM)M -name "osdev" -net none -serial none -vga std \
 #	-drive file=$(DISK_FILE),if=ide,media=disk,format=raw -d guest_errors \

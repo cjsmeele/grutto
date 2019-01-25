@@ -22,14 +22,14 @@
 #undef NULL
 #endif
 
-using u8  = unsigned char;
-using s8  =   signed char;
-using u16 = unsigned short;
-using s16 =   signed short;
-using u32 = unsigned int;
-using s32 =   signed int;
-using u64 = unsigned long long;
-using s64 =   signed long long;
+using u8  = unsigned char;      static_assert(sizeof(u8 ) == 1);
+using s8  =   signed char;      static_assert(sizeof(s8 ) == 1);
+using u16 = unsigned short;     static_assert(sizeof(u16) == 2);
+using s16 =   signed short;     static_assert(sizeof(s16) == 2);
+using u32 = unsigned int;       static_assert(sizeof(u32) == 4);
+using s32 =   signed int;       static_assert(sizeof(s32) == 4);
+using u64 = unsigned long long; static_assert(sizeof(u64) == 8);
+using s64 =   signed long long; static_assert(sizeof(s64) == 8);
 
 using size_t    = u32;
 using ptrdiff_t = s32;
@@ -74,7 +74,9 @@ public:
 
     inline constexpr bool is_aligned(size_t alignment) const { return x % alignment == 0; }
 
-    [[nodiscard]] inline addr_base_t align_down(size_t alignment) { return addr_base_t {x - x % alignment}; }
+    [[nodiscard]] inline addr_base_t align_down(size_t alignment) {
+        return addr_base_t {x - x % alignment};
+    }
     [[nodiscard]] inline addr_base_t align_up  (size_t alignment) {
         auto rest = x % alignment;
         if (rest) return addr_base_t{x + alignment - rest};
@@ -144,7 +146,7 @@ public:
 
 using paddr_t = addr_base_t<tag_physical_t>;
 using vaddr_t = addr_base_t<tag_virtual_t>;
-using  addr_t = vaddr_t;
+using  addr_t = vaddr_t; // We usually talk only about addresses in va space.
 
 using ppage_t = page_base_t<tag_physical_t>;
 using vpage_t = page_base_t<tag_virtual_t>;

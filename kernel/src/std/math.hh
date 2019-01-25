@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -124,6 +124,18 @@ constexpr u8 trailing_0s(N x) {
 template<typename N>
 constexpr u8 trailing_1s(N x) {
     return trailing_0s(static_cast<N>(~x));
+}
+
+template<typename N, typename M>
+constexpr bool add_overflows(N x, M y) {
+    using namespace tt;
+    using result_t = run<if_<map<sizeof_<>, gt<>>,
+                             const_<N>,
+                             const_<M>>,
+                         N, M>;
+
+    result_t z;
+    return __builtin_add_overflow(x, y, &z);
 }
 
 template<typename N> constexpr bool is_even(N x) { return (x & 1) == 0; }

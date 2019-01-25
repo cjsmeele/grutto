@@ -26,6 +26,7 @@
 #include "std/type-traits.hh"
 #include "std/compiler.hh"
 #include "std/literals.hh"
+#include "std/types2.hh"
 #include "std/memory.hh"
 #include "std/pointer.hh"
 #include "std/math.hh"
