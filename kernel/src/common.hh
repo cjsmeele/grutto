@@ -24,6 +24,7 @@
 #include "std/stdcommon.hh"
 #include "std/draken.hh"
 #include "std/types1.hh"
+#include "std/functional.hh"
 
 // Headers depending on basic types and type traits.
 #include "std/type-traits1.hh"

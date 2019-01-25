@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "type-traits1.hh"
+
 struct nullopt_t {};
 
 constexpr inline nullopt_t nullopt;
@@ -48,6 +50,15 @@ public:
     Optional &operator=(const nullopt_t &) {
         tag = false;
         return *this;
+    }
+
+    template<typename U> struct optionalify              { using type = Optional<U>; };
+    template<typename U> struct optionalify<Optional<U>> { using type = Optional<U>; };
+
+    template<typename F>
+    auto then(F f) -> typename optionalify<typename result_of<F, T>::type>::type {
+        if (tag) return f(**this);
+        else     return nullopt;
     }
 
     Optional()          : tag(false) { }
