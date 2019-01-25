@@ -61,6 +61,17 @@ public:
         else     return nullopt;
     }
 
+    auto orelse(const T &v) -> T {
+        if (tag) return **this;
+        else     return v;
+    }
+
+    template<typename F>
+    auto orelse(F f) -> T {
+        if (tag) return **this;
+        else     return f();
+    }
+
     Optional()          : tag(false) { }
     Optional(nullopt_t) : tag(false) { }
     Optional(const T &x) { (*this) = x; }

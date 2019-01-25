@@ -30,6 +30,7 @@
 #include "std/type-traits1.hh"
 #include "std/literals.hh"
 #include "std/compiler.hh"
+#include "std/optional.hh"
 #include "std/math.hh"
 
 // Headers depending on math, compiler builtins, literals and the above.
@@ -41,7 +42,6 @@
 #include "std/memory.hh"
 #include "std/pointer.hh"
 #include "std/tuple.hh"
-#include "std/optional.hh"
 #include "std/char.hh"
 #include "std/string.hh"
 #include "std/array.hh"

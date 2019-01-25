@@ -19,5 +19,6 @@
 
 // This makes me happy.
 
-#define λx(expr)  ([&](auto x)         { return (expr); })
-#define λxy(expr) ([&](auto x, auto y) { return (expr); })
+#define λ(...)   ([&]()               { return (__VA_ARGS__); })
+#define λx(...)  ([&](auto x)         { return (__VA_ARGS__); })
+#define λxy(...) ([&](auto x, auto y) { return (__VA_ARGS__); })
