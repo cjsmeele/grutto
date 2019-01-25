@@ -20,12 +20,12 @@
 #include "types1.hh"
 #include "type-traits1.hh"
 #include "math.hh"
-
-#include "draken.hh"
 #include "literals.hh"
 
-using tag_physical_t = tt::uint<1>;
-using tag_virtual_t  = tt::uint<2>;
+template<size_t N> struct uint { static constexpr size_t value = N; };
+
+using tag_physical_t = uint<1>;
+using tag_virtual_t  = uint<2>;
 
 #include "optional.hh"
 
@@ -86,12 +86,8 @@ public:
     inline addr_base_t (const T *p)  : x(reinterpret_cast<type>(p)) {
         // Constructing a paddr_t from a pointer is almost always a bad idea.
         // This is ugly - we should be able to use enable_if or something.
-        //static_assert(is_same<T,tag_virtual_t>::value,
-        static_assert(tt::run<tt::equal<>,Tag,tag_virtual_t>::value,
+        static_assert(is_same<Tag,tag_virtual_t>::value,
                       "tried to construct non-virtual addr-type from a pointer");
-        // Calling in the dragons may be a bit overkill, but tt::equal is the only
-        // type-traity thing we have that does not depend on *this* header.
-        // ¯\_(ツ)_/¯
     }
     template<typename T, typename... As>
     inline addr_base_t (T(p)(As...)) : x(reinterpret_cast<type>(p)) { }
