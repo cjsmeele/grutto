@@ -78,6 +78,12 @@ constexpr void fmt2(F fn, Fmtflags &f, string_view a) {
     if (f.align_left && pad > 0)
         fmtpad(fn, ' ', pad);
 }
+template<typename F, typename T>
+constexpr void fmt2(F fn, Fmtflags &f, const Optional<T> &a) {
+
+    if (a.ok()) fmt2(fn, f, *a);
+    else        fmt2(fn, f, "<null>");
+}
 
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, char c) {
     if (f.repeat) {
@@ -222,44 +228,27 @@ constexpr void fmt1(F fn, const char *s, const A &a, const As&... as) {
                 fmt2(fn, flags, a);
                 fmt(fn, s+1, as...);
                 return;
-            } else if (c == '{') {
-                fn(c);
-                reset();
-            } else if (c == '0' && !flags.width) {
-                flags.prefix_zero = true;
-            } else if (isnum(c)) {
-                flags.width = flags.width * 10 + (c - '0');
-            } else if (c == 'u') {
-                flags.unsign = true;
-            } else if (c == 'x') {
-                flags.unsign = true;
-                flags.radix  = 16;
-            } else if (c == 'o') {
-                flags.unsign = true;
-                flags.radix  = 8;
-            } else if (c == 'b') {
-                flags.unsign = true;
-                flags.radix  = 2;
-            } else if (c == 'S') { flags.size = true; flags.scale = 0;
-            } else if (c == 'K') { flags.size = true; flags.scale = 1;
-            } else if (c == 'M') { flags.size = true; flags.scale = 2;
-            } else if (c == 'G') { flags.size = true; flags.scale = 3;
-            } else if (c == 'T') { flags.size = true; flags.scale = 4;
-            } else if (c == '-') {
-                flags.align_left = true;
-            } else if (c == '+') {
-                flags.explicit_sign = true;
-            } else if (c == '#') {
-                flags.prefix_radix = true;
-            } else if (c == '~') {
-                flags.repeat = true;
+            } else if (c == '{') { fn(c); reset();
+            } else if (c == '0' && !flags.width)
+                                 { flags.prefix_zero   = true;
+            } else if (isnum(c)) { flags.width         = flags.width * 10 + (c - '0');
+            } else if (c == 'u') { flags.unsign        = true;
+            } else if (c == 'x') { flags.unsign        = true; flags.radix = 16;
+            } else if (c == 'o') { flags.unsign        = true; flags.radix =  8;
+            } else if (c == 'b') { flags.unsign        = true; flags.radix =  2;
+            } else if (c == 'S') { flags.size          = true; flags.scale =  0;
+            } else if (c == 'K') { flags.size          = true; flags.scale =  1;
+            } else if (c == 'M') { flags.size          = true; flags.scale =  2;
+            } else if (c == 'G') { flags.size          = true; flags.scale =  3;
+            } else if (c == 'T') { flags.size          = true; flags.scale =  4;
+            } else if (c == '-') { flags.align_left    = true;
+            } else if (c == '+') { flags.explicit_sign = true;
+            } else if (c == '#') { flags.prefix_radix  = true;
+            } else if (c == '~') { flags.repeat        = true;
             }
         } else {
-            if (c == '{') {
-                in_brace = true;
-            } else {
-                fn(c);
-            }
+            if (c == '{') in_brace = true;
+            else          fn(c);
         }
     }
 }

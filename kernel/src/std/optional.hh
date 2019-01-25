@@ -37,6 +37,7 @@ public:
     constexpr                   bool ok() const { return tag; }
 
     T &operator*()   const { return *ptr(); }
+    T *operator->()  const { return  ptr(); }
 
     Optional &operator=(const T &x) {
         *ptr() = x;
