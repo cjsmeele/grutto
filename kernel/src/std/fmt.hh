@@ -231,6 +231,8 @@ constexpr void fmt1(F fn, const char *s, const A &a, const As&... as) {
             } else if (c == '{') { fn(c); reset();
             } else if (c == '0' && !flags.width)
                                  { flags.prefix_zero   = true;
+            } else if (c == 'r' && flags.width > 1)
+                                 { flags.radix = flags.width; flags.width = 0;
             } else if (isnum(c)) { flags.width         = flags.width * 10 + (c - '0');
             } else if (c == 'u') { flags.unsign        = true;
             } else if (c == 'x') { flags.unsign        = true; flags.radix = 16;
