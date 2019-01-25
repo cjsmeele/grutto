@@ -20,16 +20,25 @@
 #ifndef COMMON_HH_INCLUDED
 #define COMMON_HH_INCLUDED
 
+// Headers without dependencies.
 #include "std/stdcommon.hh"
 #include "std/draken.hh"
-#include "std/types.hh"
-#include "std/type-traits.hh"
-#include "std/compiler.hh"
+#include "std/types1.hh"
+
+// Headers depending on basic types and type traits.
+#include "std/type-traits1.hh"
 #include "std/literals.hh"
+#include "std/compiler.hh"
+#include "std/math.hh"
+
+// Headers depending on math, compiler builtins, literals and the above.
 #include "std/types2.hh"
+#include "std/type-traits2.hh"
+#include "std/types2.hh"
+
+// Other standard-ish headers.
 #include "std/memory.hh"
 #include "std/pointer.hh"
-#include "std/math.hh"
 #include "std/tuple.hh"
 #include "std/optional.hh"
 #include "std/char.hh"
@@ -40,6 +49,7 @@
 #include "std/queue.hh"
 #include "std/bitmap.hh"
 
+// Headers specific to the kernel, but used widely enough.
 #include "common/asm.hh"
 #include "common/kernel-sections.hh"
 #include "common/mem-ops.hh"
@@ -49,7 +59,8 @@
 #include "common/debug.hh"
 #include "common/res.hh"
 #include "common/time.hh"
-// XXX
+
+// XXX For critical sections. Should be a common header.
 #include "int/int.hh"
 
 #endif

@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "types.hh"
+#include "types1.hh"
 
 u64 constexpr operator ""_K(u64 i) { return i * 1024;                      }
 u64 constexpr operator ""_M(u64 i) { return i * 1024 * 1024;               }

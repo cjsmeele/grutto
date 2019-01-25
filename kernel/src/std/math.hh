@@ -17,7 +17,8 @@
  */
 #pragma once
 
-#include "types.hh"
+#include "types1.hh"
+#include "type-traits1.hh"
 
 // Naive, unoptimized math functions.
 

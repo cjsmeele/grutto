@@ -17,5 +17,21 @@
  */
 #pragma once
 
-#include "types1.hh"
-#include "types2.hh"
+// Type definitions that do not depend on anything else.
+
+// NULL macro is bad practice, use nullptr instead.
+#ifdef NULL
+#undef NULL
+#endif
+
+using u8  = unsigned char;      static_assert(sizeof(u8 ) == 1);
+using s8  =   signed char;      static_assert(sizeof(s8 ) == 1);
+using u16 = unsigned short;     static_assert(sizeof(u16) == 2);
+using s16 =   signed short;     static_assert(sizeof(s16) == 2);
+using u32 = unsigned int;       static_assert(sizeof(u32) == 4);
+using s32 =   signed int;       static_assert(sizeof(s32) == 4);
+using u64 = unsigned long long; static_assert(sizeof(u64) == 8);
+using s64 =   signed long long; static_assert(sizeof(s64) == 8);
+
+using size_t    = u32;
+using ptrdiff_t = s32;
