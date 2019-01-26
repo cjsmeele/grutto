@@ -43,6 +43,17 @@ struct Fmtflags {
     bool size          : 1 = false; ///< (only for numbers) format as human-readable K/M/G
 };
 
+// Makes a fmt callback from a function that can handle only one char at a time.
+template<typename F>
+struct FmtOneByOne {
+    F f;
+    constexpr void operator()(char c) const                  { f(c); }
+    constexpr void operator()(const char *s) const           { while (*s ) f(*s++); }
+    constexpr void operator()(const char *s, size_t n) const { while (n--) f(*s++); }
+
+    FmtOneByOne(F f) : f(f) { }
+};
+
 template<typename F>
 constexpr void fmtpad(F fn, char c, int count) {
     for (int i = 0; i < count; ++i) {
@@ -89,6 +100,35 @@ constexpr void fmt2(F fn, Fmtflags &f, const Either<L,R> &a) {
 
     if (a.ok()) fmt2(fn, f, a.right());
     else        fmt2(fn, f, a.left());
+}
+template<typename F, typename T>
+constexpr void fmt2(F fn, Fmtflags &f, const span_t<T> &a) {
+
+    if (!a.valid()) {
+        fmt2(fn, f, "<invalid>");
+        return;
+    }
+
+    // XXX: Quick'n'dirty, does not respect most input flags.
+    Fmtflags f2;
+    f2.width       = sizeof(T)*2;
+    f2.radix       = 16;
+    f2.prefix_zero = true;
+
+    Fmtflags f3;
+
+    char buf[sizeof(u64)*2 *2 + 3 + 1] { };
+    size_t i = 0;
+
+    fmt2(FmtOneByOne{λx(buf[i++] = x)}, f2, a.start());
+    fmt2(FmtOneByOne{λx(buf[i++] = x)}, f3, " - ");
+    if (a.empty())
+         fmt2(FmtOneByOne{λx(buf[i++] = x)}, f2, "<empty>");
+    else fmt2(FmtOneByOne{λx(buf[i++] = x)}, f2, a.start() + a.size());
+
+    buf[i++] = 0;
+
+    fmt2(fn, f, buf);
 }
 
 
