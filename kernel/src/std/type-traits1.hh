@@ -19,8 +19,13 @@
 
 #include "types1.hh"
 
+template<typename...> using void_t = void;
+
 template<typename T> struct is_void       { static constexpr bool value = false; };
 template<>           struct is_void<void> { static constexpr bool value = true;  };
+
+template<typename T> struct is_bool       { static constexpr bool value = false; };
+template<>           struct is_bool<bool> { static constexpr bool value = true;  };
 
 template<typename T> struct is_integral       { static constexpr bool value = false; };
 template<>           struct is_integral<char> { static constexpr bool value = true;  };
@@ -80,6 +85,7 @@ template<typename T> struct remove_cv {
 
 template<typename T> struct remove_ref                  { using type = T; };
 template<typename T> struct remove_ref<T&>              { using type = T; };
+template<typename T> struct remove_ref<T&&>             { using type = T; };
 
 template<typename T> struct add_ref                  { using type = T&; };
 template<typename T> struct add_ref<T&>              { using type = T;  };
@@ -93,4 +99,27 @@ template<typename T> typename add_rref<T>::type declval();
 
 template<typename F, typename... As> struct result_of {
     using type = decltype(declval<F>()(declval<As>()...));
+};
+
+template<typename T> struct is_fundamental {
+    static constexpr bool value = is_void<T>::value
+                               || is_bool<T>::value
+                               || is_integral<T>::value
+                               || is_float<T>::value
+                               || is_pointy<T>::value;
+};
+
+template<typename F, typename... As>
+struct is_callable {
+    template<typename...> struct list_{};
+
+    template<typename, typename, typename = void_t<>>
+    struct impl { static constexpr bool value = false; };
+
+    template<typename G, typename... Bs>
+    struct impl<G, list_<Bs...>, void_t<decltype(declval<G>()(declval<Bs>()...))>> {
+        static constexpr bool value = true;
+    };
+
+    static constexpr bool value = impl<F,list_<As...>>::value;
 };

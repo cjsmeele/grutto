@@ -26,6 +26,7 @@
 #include "mem/kmm.hh"
 #include "pci.hh"
 #include "initrd.hh"
+#include "elf.hh"
 
 // nnoremap <F5> :w \| split \| terminal make -Bj8 && make -C.. run NOVGA=1<CR>
 //register int sp asm ("sp");
@@ -69,7 +70,7 @@ static void kmain() {
 
     {
         auto *pd = Vmm::clone_pd();
-        koi(LL::debug).fmt("ik switch naar pdir va:{} pa:{})\n\n", pd, *Vmm::va_to_pa(vaddr_t{pd}));
+        koi(LL::debug).fmt("ik switch naar pdir va:{} pa:{}\n\n", pd, *Vmm::va_to_pa(vaddr_t{pd}));
         Vmm::switch_pd(*pd);
     }
 
@@ -77,7 +78,19 @@ static void kmain() {
     Initrd::init(initrd, initrd_size);
     Initrd::dump();
 
-    // u8 *buf = _;
+    auto entry_ = Initrd::get_file("hello.elf")
+                         .note("file not found in initrd")
+                         .then(λx(Elf::load(x.data, x.size)));
+
+    koi.fmt("{}{}\n", entry_.ok()
+                        ? "ELF geladen! entrypoint @"
+                        : "ELF niet OK: "
+                    , entry_);
+
+    if (entry_.ok()) {
+        // ...
+    }
+
     // assert(vaddr_t{buf}.is_aligned(page_size), "not aligned");
     // paddr_t tgt = *Vmm::va_to_pa(buf);
     // koi.fmt("tgt {}\n", tgt);
@@ -87,7 +100,7 @@ static void kmain() {
 
     auto start_time = uptime();
     for (u64 i = 0;; ++i) {
-        auto up = 10050_ms - uptime();
+        auto up = uptime();
         koi.fmt("\r[{6}.{02}] {} ",
                 time_s(up), time_ms(up)/10 % 100,
                 "/-\\|"[i/2%4]);

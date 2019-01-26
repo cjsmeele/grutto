@@ -200,7 +200,13 @@ struct span_t {
             && o <= start_ + (size_-1);
     }
 
-    constexpr span_t(T start, T size) : start_{start}, size_{size} { }
+    constexpr span_t &operator=(const span_t &o) {
+        start_ = o.start_, size_ = o.size_;
+        return *this;
+    }
+
+    constexpr span_t(T start, T size) : start_{  start},  size_{  size}  { }
+    constexpr span_t(const span_t &o) : start_{o.start_}, size_{o.size_} { }
 
     template<typename Tag>
     constexpr span_t(addr_base_t<Tag> start, size_t size) : start_{start.u()}, size_{size} { }

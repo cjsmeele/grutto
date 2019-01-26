@@ -21,6 +21,6 @@
 
 namespace Elf {
 
-    [[nodiscard]] Optional<vaddr_t> load(vaddr_t elf_base, size_t elf_size);
+    [[nodiscard]] Either<const char*, vaddr_t> load(vaddr_t elf_base, size_t elf_size);
 
 }

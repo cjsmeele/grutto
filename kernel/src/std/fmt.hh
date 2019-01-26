@@ -84,6 +84,13 @@ constexpr void fmt2(F fn, Fmtflags &f, const Optional<T> &a) {
     if (a.ok()) fmt2(fn, f, *a);
     else        fmt2(fn, f, "<null>");
 }
+template<typename F, typename L, typename R>
+constexpr void fmt2(F fn, Fmtflags &f, const Either<L,R> &a) {
+
+    if (a.ok()) fmt2(fn, f, a.right());
+    else        fmt2(fn, f, a.left());
+}
+
 
 template<typename F> constexpr void fmt2(F fn, Fmtflags &f, char c) {
     if (f.repeat) {

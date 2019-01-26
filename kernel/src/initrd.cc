@@ -59,11 +59,25 @@ namespace Initrd {
         return (file_entry_t*)initrd_start.offset(file_entry_offset(i));
     }
 
+    file_entry_t *get_entry(const char *name) {
+        for (size_t i = 0; i < entry_count; ++i) {
+            auto &entry = *get_entry(i);
+            if (strneq(name, entry.name, max_file_name_length))
+                return &entry;
+        }
+        return nullptr;
+    }
+
+    Optional<file_t> get_file(const char *name) {
+        auto *e = get_entry(name);
+        if (e) return static_cast<file_t>(*e);
+        else   return nullopt;
+    }
+
     template<typename F>
     void iterate(F f) {
-        for (size_t i = 0; i < entry_count; ++i) {
+        for (size_t i = 0; i < entry_count; ++i)
             f(static_cast<file_t>(*get_entry(i)));
-        }
     }
 
     void dump() {

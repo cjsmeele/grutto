@@ -61,30 +61,34 @@ namespace Elf {
         elf32_half_t sh_str_index;
     } __attribute__((packed));
 
-    Optional<vaddr_t> load(vaddr_t elf_base, size_t elf_size) {
-        if (elf_size < sizeof(Elf32Header)) return nullopt;
+    Either<const char*, vaddr_t> load(vaddr_t elf_base, size_t elf_size) {
+        if (elf_size < sizeof(Elf32Header))
+            return Left("ELF header invalid");
 
         auto elf_span = span_t { elf_base, elf_size };
 
         auto &header = *(Elf32Header*)elf_base;
 
-        if (!strneq(header.ident.magic, "\x7f""ELF", 4)) return nullopt;
+        if (!strneq(header.ident.magic, "\x7f""ELF", 4))
+            return Left("ELF magic missing");
 
-        if (header.ident.elf_class  != ELF_32BIT) return nullopt;
-        if (header.ident.endianness != ELF_LE)    return nullopt;
-        if (header.type             != 2)         return nullopt;
+        if (header.ident.elf_class  != ELF_32BIT) return Left("unsupported ELF bitness");
+        if (header.ident.endianness != ELF_LE)    return Left("unsupported ELF endianness");
+        if (header.type             != 2)         return Left("ELF not executable");
 
         auto ph_span_ = safe_add(elf_base.u(), header.ph_off)
                        .then(λx(safe_mul(u32{header.ph_num}, header.ph_ent_size)
-                               .then   (λy(make_span(x, y)))))
-                               .require(λx(elf_span.contains(x)));
+                               .then(λy(make_span(x, y)))))
+                       .require(λx(elf_span.contains(x)))
+                       .note("invalid program header size / location");
 
-        if (!ph_span_.ok()) return nullopt; auto ph_span = *ph_span_;
+        if (!ph_span_.ok()) return Left(ph_span_.left());
+        auto ph_span = *ph_span_;
 
+        //koi.fmt("header magic: {}\n", header.ident.magic+1);
 
-        koi.fmt("header magic: {}\n", header.ident.magic+1);
+        // TODO.
 
-        //return vaddr_t{header.entry};
-        return nullopt;
+        return Right(vaddr_t{header.entry});
     }
 }

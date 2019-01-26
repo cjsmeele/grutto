@@ -17,21 +17,15 @@
  */
 #pragma once
 
-#include "common.hh"
+#include "draken.hh"
 
-namespace Initrd {
+// Custom metafunctions built on top of Draken.
 
-    constexpr inline size_t max_file_name_length = 23;
+namespace tt {
 
-    struct file_t {
-        char name[max_file_name_length + 1];
-        u8  *data;
-        u32  size;
-    };
+    template<typename C = return_one>
+    using max_size  = map<sizeof_<>,  maximum<C>>;
 
-    Optional<file_t> get_file(const char *name);
-
-    void dump();
-
-    void init(addr_t addr, size_t size);
+    template<typename C = return_one>
+    using max_align = map<alignof_<>, maximum<C>>;
 }

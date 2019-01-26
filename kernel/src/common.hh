@@ -22,7 +22,8 @@
 
 // Headers without dependencies.
 #include "std/stdcommon.hh"
-//#include "std/draken.hh"
+#include "std/draken.hh"
+#include "std/draken-ext.hh"
 #include "std/types1.hh"
 #include "std/functional.hh"
 
@@ -32,6 +33,8 @@
 #include "std/compiler.hh"
 #include "std/optional.hh"
 #include "std/math.hh"
+#include "std/either.hh"
+#include "std/math-safe.hh"
 
 // Headers depending on math, compiler builtins, literals and the above.
 #include "std/types2.hh"
