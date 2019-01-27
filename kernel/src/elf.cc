@@ -119,6 +119,8 @@ namespace Elf {
 
         auto user_span = span_t { size_t{1_M}, size_t{0xc000'0000ULL - 1_M} };
 
+        bool entry_point_mapped = false;
+
         FixedVector<Elf32PhEntry*, max_ph_segments> segments;
 
         for (size_t i = 0; i < header.ph_num; ++i) {
@@ -149,10 +151,14 @@ namespace Elf {
                                                          return Left("invalid program header entry");
             }
 
+            if ((*mem_span_).contains(header.entry))
+                entry_point_mapped = true;
+
             segments.push(phe);
         }
 
         if (segments.empty())                            return Left("no loadable segments");
+        if (!entry_point_mapped)                         return Left("entrypoint not in mapped mem");
 
         // * Load segments.
 
@@ -174,8 +180,6 @@ namespace Elf {
             memcpy((char*)phe->v_addr,                elf_base.offset(phe->offset), phe->size_file);
             memset((char*)phe->v_addr+phe->size_file, 0,                            phe->size_mem);
         }
-
-        // FIXME: Should verify that the entrypoint is within one of the PT_LOAD segments.
 
         return Right(vaddr_t{header.entry});
     }

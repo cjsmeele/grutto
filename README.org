@@ -1,10 +1,116 @@
 #+TITLE:  Grutto
 #+AUTHOR: Chris Smeele
 
-* Inleiding
+Grutto is an exploratory hobby operating system for personal computing.
 
-Hoe te starten:
+[[./misc/grutto2-half.png]]
 
-: make -j4 run SERIAL_IO=1
+** Project goal
 
-(vereist yasm, clang, lld, mtools, perl 5.10.1, imagemagick en qemu)
+This being a hobby project, the main goal is to have fun through experimentation!
+
+Secondly, I hope to further my own education, and to provide a good base
+knowledge and skillset for me to develop a more serious PC OS in the future.
+
+Hopefully, in the end I will have made something half-decent that I can share
+with other people who may take an interest in OS development.
+
+** Design?
+
+I know design-as-you-go sounds like a terrible strategy for a project of this
+size, but I sort of do it anyway. I'm not afraid to rewrite huge parts of this
+project if I find a better approach along the way :-)
+
+The most concrete idea that I can give you is that this aims to be a graphical
+microkernel OS for 32-bit x86, written in C++.
+
+** Project status / roadmap-ish
+
+*** Stuff that is implemented at this point:
+
+- Bootloader & bootstrapping (through [[https://github.com/cjsmeele/stoomboot][stoomboot]])
+- Basic serial terminal
+- Physical memory manager (bitmap-based)
+- Virtual memory manager
+  - Basic support for multiple address spaces
+- Kernel heap (through [[http://g.oswego.edu/dl/html/malloc.html][dlmalloc]])
+- Initrd generator and loader
+- ELF loader
+
+*** Other niceties that were made just for fun:
+
+- Optional in-kernel graphical framebuffer terminal (using stoomboot for modesetting)
+- A C++ template metaprogramming library ([[./kernel/src/std/draken.hh][draken]])
+- Maybe & Either types with monad-ish chaining functions
+  ([[./kernel/src/std/optional.hh][Optional]],
+  [[./kernel/src/std/either.hh][Either]])
+
+*** Stuff that is next up for implementation:
+
+- Switch to user-mode
+- Pre-emptive round-robin scheduler
+- Syscalls
+- IPC (message passing and shared memory)
+
+*** Other stuff that will be needed in the future:
+
+- Something that can grant tasks access to memory-mapped IO, for drivers in userspace.
+- Keyboard driver
+- Disk drivers
+- VFS and one or more filesystem drivers
+- Actual userspace programs!
+
+** Can I run this?
+
+You can, probably!
+
+You only need the following dependencies, all (hopefully) available through
+your package manager:
+
+| make        | build system                          |
+| yasm        | assembler                             |
+| clang       | compiler                              |
+| lld         | linker                                |
+| mtools      | for interacting with FAT images       |
+| perl        | custom tooling                        |
+| imagemagick | for preprocessing graphical resources |
+| qemu        | in order to actually run the OS :-)   |
+
+Your clang may need to be a recent-ish version, as I depend on at least partial
+c++2a support. The version packaged in Arch Linux works fine.
+
+If you get linker errors on ~clang_rt.builtins-i386~, edit LDLIBPATH in
+~kernel/Makefile~ to point to the right location for your clang version.
+
+To build and run the OS, run the following:
+
+: make -j4 run
+
+(optionally, add the ~SERIAL_IO=1~ parameter at the end to enable the serial console)
+
+Alternative command, which skips the bootloader to have qemu load the kernel
+directly (disables graphics and enables the serial console):
+
+: make -j4 fast
+
+** Documentation?
+
+Currently all in-code or in-memory (of the developer). Good luck! ;-)
+
+** Screenshots?
+
+[[./misc/screens/elf.png]]
+
+** Bugs / questions
+
+If you have any ideas you like to share, or if you find a bug, feel free to
+open an issue on Github (but keep in mind that since this is a hobby project, I
+cannot guarantee a satisfactory response).
+
+** Author
+
+- [[https://github.com/cjsmeele][Chris Smeele]]
+
+** License
+
+GPLv3, see [[./LICENSE][LICENSE]] for more information.

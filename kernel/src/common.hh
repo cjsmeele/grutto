@@ -20,6 +20,8 @@
 #ifndef COMMON_HH_INCLUDED
 #define COMMON_HH_INCLUDED
 
+// These files are all included into one pre-compiled header.
+
 // Headers without dependencies.
 #include "std/stdcommon.hh"
 #include "std/draken.hh"
