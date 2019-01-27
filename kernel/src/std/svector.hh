@@ -35,6 +35,7 @@ public:
     // XXX Protect
 
     constexpr size_t length() const { return length_; }
+    constexpr bool   empty()  const { return length_ == 0; }
 
     constexpr const T *data() const { return (T*)items; }
     constexpr       T *data()       { return (T*)items; }
@@ -82,19 +83,6 @@ public:
     auto transform(F f) {
         for (auto &x : *this)
             f(x);
-    }
-
-    template<typename F>
-    constexpr T foldl(F f) const {
-        if (!length())
-            return {};
-
-        T x = (*this)[0];
-
-        for (size_t i = 1; i < length(); ++i)
-            x = f(x, (*this)[i]);
-
-        return x;
     }
 };
 

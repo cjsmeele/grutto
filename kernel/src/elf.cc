@@ -16,8 +16,11 @@
  * along with Grutto.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "elf.hh"
+#include "mem/vmm.hh"
 
 namespace Elf {
+
+    constexpr inline size_t max_ph_segments = 16;
 
     enum ElfClass : u8 {
         ELF_32BIT = 1,
@@ -61,6 +64,14 @@ namespace Elf {
         elf32_half_t sh_str_index;
     } __attribute__((packed));
 
+    enum ElfType : u32 {
+        ELF_TYPE_NONE = 0, ///< No type.
+        ELF_TYPE_REL  = 1, ///< Relocatable object.
+        ELF_TYPE_EXEC = 2, ///< Executable.
+        ELF_TYPE_DYN  = 3, ///< Shared object.
+        ELF_TYPE_CORE = 4, ///< Core file.
+    };
+
     enum ElfPhEntryType : u8 {
         ELF_PT_LOAD = 1,
     };
@@ -77,58 +88,94 @@ namespace Elf {
     } __attribute__((packed));
 
     Either<const char*, vaddr_t> load(vaddr_t elf_base, size_t elf_size) {
-        if (elf_size < sizeof(Elf32Header))
-            return Left("ELF header invalid");
 
-        auto elf_span = span_t { elf_base, elf_size };
+        // * Validate ELF image.
 
-        auto &header = *(Elf32Header*)elf_base;
+        if (elf_size < sizeof(Elf32Header))              return Left("ELF header invalid");
 
-        if (!strneq(header.ident.magic, "\x7f""ELF", 4))
-            return Left("ELF magic missing");
+        const auto elf_span = span_t { elf_base, elf_size };
+        const auto &header  = *(Elf32Header*)elf_base;
 
-        if (header.ident.elf_class  != ELF_32BIT) return Left("unsupported ELF bitness");
-        if (header.ident.endianness != ELF_LE)    return Left("unsupported ELF endianness");
-        if (header.type             != 2)         return Left("ELF not executable");
+        // * Validate ELF header.
+
+        if (!strneq(header.ident.magic, "\x7f""ELF", 4)) return Left("ELF magic missing");
+        if (header.ident.elf_class   != ELF_32BIT      ) return Left("unsupported ELF bitness");
+        if (header.ident.endianness  != ELF_LE         ) return Left("unsupported ELF endianness");
+        if (header.type              != ELF_TYPE_EXEC  ) return Left("ELF not executable");
+
+        // * Validate program header location and size.
 
         auto ph_span_ = safe_add(elf_base.u(), header.ph_off)
                        .then(λx(safe_mul(u32{header.ph_num}, header.ph_ent_size)
                                .then(λy(make_span(x, y)))))
                        .require(header.ph_num > 0)
-                       .require(λx(elf_span.contains(x)))
-                       .note("invalid program header size / location");
+                       .require(header.ph_num <= max_ph_segments)
+                       .require(λx(elf_span.contains(x)));
 
-        if (!ph_span_.ok()) return Left(ph_span_.left());
+        if (!ph_span_.ok())                              return Left("invalid program header spec");
         auto ph_span = *ph_span_;
 
-        koi.fmt("ph span: {}\n", ph_span);
-
-        Elf32PhEntry *phe = (Elf32PhEntry*)ph_span.start();
+        // * Validate program header entries.
 
         auto user_span = span_t { size_t{1_M}, size_t{0xc000'0000ULL - 1_M} };
 
-        koi.fmt("verifying PT_LOAD segments against user span {}\n", user_span);
+        FixedVector<Elf32PhEntry*, max_ph_segments> segments;
 
-        for (size_t i = 0; i < header.ph_num; ++i, ++phe) {
+        for (size_t i = 0; i < header.ph_num; ++i) {
+
+            Elf32PhEntry *phe = ((Elf32PhEntry*)ph_span.start()) + i;
+
             if (phe->type != ELF_PT_LOAD)
                 // We are only interested in segments that need loading.
                 continue;
 
+            // ** Verify that the claimed memory fully resides in userspace.
             auto mem_span_  = safe_add(phe->size_file, phe->size_mem)
-                              .then(λx(make_span(phe->v_addr, x)));
-            auto file_span_ = make_span(phe->offset, phe->size_file);
+                             .then(λx(make_span(phe->v_addr, x)))
+                             .require(λx(user_span.contains(x)));
 
-            if (!mem_span_.ok() || !file_span_.ok())
-                return Left("invalid program header entry");
+            // ** Verify that the referenced file data is contained within the ELF image.
+            auto file_span_ = safe_add(elf_base.u(), phe->offset)
+                             .then(λx(make_span(x, phe->size_file)))
+                             .require(λx(x.empty() || elf_span.contains(x)));
 
-            koi.fmt("> PT_LOAD: type<{08x}> offset<{08x}> va<{}> file<{6S}> mem<{6S}>\n",
-                    phe->type, phe->offset, vaddr_t{phe->v_addr},
-                    phe->size_file, phe->size_mem);
+            if (!mem_span_.ok() || !file_span_.ok())     return Left("invalid program header entry");
+
+            // ** Verify that the claimed memory does not overlap other segments.
+
+            for (const auto *o : segments) {
+                if ((*mem_span_).overlaps(span_t { u32{o->offset},
+                                                   u32{o->size_file + o->size_mem} }))
+                                                         return Left("invalid program header entry");
+            }
+
+            segments.push(phe);
         }
 
-        //koi.fmt("header magic: {}\n", header.ident.magic+1);
+        if (segments.empty())                            return Left("no loadable segments");
 
-        // TODO.
+        // * Load segments.
+
+        for (const auto *phe : segments) {
+            koi.fmt("> PT_LOAD: offset<{08x}> va<{}> file<{6S}> mem<{6S}>\n",
+                    phe->offset, vaddr_t{phe->v_addr}, phe->size_file, phe->size_mem);
+
+            auto span = span_t { u32{phe->offset}, u32{phe->size_file + phe->size_mem} };
+            if (!Vmm::map_alloc(vaddr_t{phe->v_addr}.align_down(page_size),
+                                div_ceil(span.size(), page_size),
+                                Vmm::P_User | Vmm::P_Writable).ok()) {
+
+                // XXX: This may leak any previous map/allocs.
+                //      (though we should have a good pdir cleanup routine anyway)
+                return Left("could not allocate memory for ELF image");
+            }
+
+            // Actually load stuff!
+            memcpy((char*)phe->v_addr,                elf_base.offset(phe->offset), phe->size_file);
+            memset((char*)phe->v_addr+phe->size_file, 0,                            phe->size_mem);
+        }
+
+        // FIXME: Should verify that the entrypoint is within one of the PT_LOAD segments.
 
         return Right(vaddr_t{header.entry});
     }

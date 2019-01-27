@@ -120,8 +120,23 @@ extern "C" {
             ++Time::systick_counter;
             if (Int::ticker && Time::systick_counter % 10 == 0)
                 Int::ticker(frame);
+
+        } else if (frame->int_no == 0x80) {
+            // Userspace called!
+            // (well, not actually userspace yet, but let's pretend this is a syscall)
+
+            if (frame->eax == 0xbeeeeeef) {
+                // Reading and printing random strings from userspace-supplied
+                // addresses seems like a safe thing to do.
+                koi.fmt("{}", (const char*)frame->ebx);
+            } else if (frame->eax == 0xbeeeeef) {
+                koi.fmt("{}", (int)frame->ebx);
+            } else {
+                koi.fmt("got an unknown sycall request: {08x}\n", static_cast<s32>(frame->eax));
+            }
+
         } else {
-            koi(LL::warning).fmt("\n>>> unhandled irq {#04x}\n", frame->int_no);
+            koi(LL::warning).fmt(">>> unhandled irq {#04x}\n", frame->int_no);
         }
 
         //Int::Pic::ack(frame->int_no >= 0x28 && frame->int_no < 0x30);

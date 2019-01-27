@@ -20,48 +20,46 @@
 #include "common.hh"
 #include "pmm.hh"
 
-// Virtual address map:
-//
-// +--------------------+ 0x0000'0000
-// | Unusable 1M        |
-// |--------------------| 0x0010'0000
-// | User program       |
-// |--------------------|
-// | User heap          |
-// |--------------------|
-// | free               |
-// |                    |
-// |--------------------| 0xc000'0000
-// | Kernel code        |
-// |--------------------|
-// | Kernel data        |
-// |--------------------|
-// | Kernel heap        |
-// |--------------------| 0xe000'0000
-// |--------------------| 0xef00'0000
-// | Framebuffer        |
-// |--------------------| 0xff00'0000
-// | Page tables        |
-// |--------------------| 0xff40'0000
-// | Cur. page dir.     |
-// |--------------------| 0xff40'1000
-// |--------------------| 0xffff'1000
-// | Kernel stack       |
-// |--------------------| 0xffff'6000
-// | free               |
-// +--------------------+
-
 // Page tables for kernel memory (>=c0000000) are pre-allocated and mapped in
 // all address spaces.
-// pa_kernel_pts contains enough (1024) pagetables to map all virtual memory.
+// pa_kernel_pts contains enough (256) pagetables to map all kernel virtual memory.
 //
 // We will not bother with ASLR and PTI, so stuff should be mostly
 // straightforward from here.
 
+// Virtual address map:
+//
+// ┌────────────────────┐ 0x0000'0000
+// ├────────────────────┤ 0x0010'0000
+// │ User program       │
+// ├────────────────────┤
+// │ User heap          │
+// ├────────────────────┤
+// ┊                    ┊
+// ├────────────────────┤
+// │ User stack         │
+// ├────────────────────┤
+// ├────────────────────┤ 0xc000'0000
+// │ Kernel code        │
+// ├────────────────────┤
+// │ Kernel data        │
+// ├────────────────────┤
+// │ Kernel heap        │
+// ├────────────────────┤ 0xe000'0000
+// ├────────────────────┤ 0xef00'0000
+// │ Framebuffer        │
+// ├────────────────────┤ 0xff00'0000
+// │ Page tables        │
+// ├────────────────────┤ 0xff40'0000
+// ├────────────────────┤ 0xffff'1000
+// │ Kernel stack       │
+// ├────────────────────┤ 0xffff'6000
+// └────────────────────┘ 0xffff'ffff
+
 namespace Vmm {
 
-    using pde_t = u32;
-    using pte_t = u32;
+    using pde_t = u32; // Page directory entry.
+    using pte_t = u32; // Page table entry.
 
     constexpr bool pde_present(pde_t pde) { return pde & 1; }
     constexpr bool pte_present(pte_t pte) { return pte & 1; }
@@ -72,18 +70,16 @@ namespace Vmm {
     using ptab_t __attribute__((aligned(page_size))) = Array<pte_t,1_K>;
 
     static_assert(alignof(pdir_t) == 4_K, "Page directory type is not aligned");
-    static_assert(sizeof(pdir_t) == 4_K);
-    static_assert(sizeof(ptab_t) == 4_K);
-
-    // va_pdir always points to the current page directory.
-    constexpr auto va_pdir         = vaddr_t {0xff400000UL};
+    static_assert( sizeof(pdir_t) == 4_K);
+    static_assert( sizeof(ptab_t) == 4_K);
 
     // va_pts always points to the 4M va-region where page tables for the
-    // current task are mapped.
+    // current task are mapped ("recursive mapping").
     // Note that each pagetable takes up 4K (one page). The pages containing
     // kernel pagetables are always mapped. User pagetables are allocated as needed.
     //
-    // the upper ¼th is the same for all processes (kernel memory).
+    // the upper ¼th is the same for all processes (kernel memory),
+    // except for the page table that contains recursive mappings (at va_pts).
     // the lower ¾th differs per process.
     constexpr auto va_pts          = vaddr_t {0xff000000UL}; // (1020ULL << 22)
 

@@ -19,23 +19,6 @@
 
 #include "multiboot-info.hh"
 
-// Physical address map:
-//
-// +------------------+ 0x0000'0000
-// | Unusable 1M      |
-// |------------------| 0x0010'0000
-// | Bootstrap        |
-// | Kernel stack     |
-// |------------------|
-// | Kernel code      |
-// |------------------|
-// | Kernel data      |
-// |------------------|
-// | Kernel heap      |
-// | User programs    |
-// | etc.             |
-// +------------------+
-
 namespace Pmm {
 
     Bitmap<bitmap_elems, 1> bmp;

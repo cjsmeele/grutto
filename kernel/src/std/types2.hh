@@ -119,7 +119,7 @@ public:
     explicit inline constexpr operator type() const { return x; }
 
     inline constexpr type u() const { return x; }
-    explicit inline constexpr operator addr_base_t<Tag>() const {
+    inline constexpr operator addr_base_t<Tag>() const {
         return addr_base_t<Tag> {static_cast<type>(x * page_size)};
     }
 

@@ -37,6 +37,22 @@ CXX := clang++ --target=$(TARGET)-elf
 AS  := yasm
 LD  := ld.lld
 
+CXXWARNINGS :=             \
+	-Wall                  \
+	-Wextra                \
+	-Wpedantic             \
+	-Werror=return-type    \
+	-Werror=unused-result  \
+	-Wshadow               \
+	-Wpointer-arith        \
+	-Wcast-align           \
+	-Wwrite-strings        \
+	-Wmissing-declarations \
+	-Wredundant-decls      \
+	-Winline               \
+	-Wuninitialized        \
+	-Wno-unused-parameter
+
 # CXXFLAGS :=                            \
 # 	-fdiagnostics-color=auto           \
 # 	-Os                                \
@@ -74,9 +90,7 @@ CXXFLAGS :=                            \
 	-mno-sse                           \
 	-std=c++2a                         \
 	-pipe                              \
-	-Wall                              \
-	-Wextra                            \
-	-Wpedantic
+	$(CXXWARNINGS)
 
 
 LDFLAGS := \

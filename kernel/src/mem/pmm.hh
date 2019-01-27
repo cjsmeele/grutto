@@ -19,6 +19,24 @@
 
 #include "common.hh"
 
+// Rough physical address map:
+//
+// ┌──────────────────┐ 0x0000'0000
+// ├──────────────────┤ 0x0010'0000
+// │ Bootstrap        │
+// │ Kernel stack     │
+// ├──────────────────┤
+// │ Kernel code      │
+// ├──────────────────┤
+// │ Kernel data      │
+// ├──────────────────┤
+// │ Kernel heap      │
+// │ User programs    │
+// │ Memory mapped IO │
+// │ etc.             │
+// ├──────────────────┤
+// └──────────────────┘ 0xffff'ffff
+
 namespace Pmm {
 
     // It takes 4G/4K/8 = 128K to have an allocation bitmap for the entire

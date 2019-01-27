@@ -148,7 +148,7 @@ namespace Vmm {
         auto &pt  = *pt_;
         auto &pte = pt[vp.u() % 1_K];
 
-        // koi(LL::debug).fmt("map page {} -> {}\n", vaddr_t{vp}, paddr_t{pp});
+        //koi(LL::debug).fmt("map page {} -> {}\n", vaddr_t{vp}, paddr_t{pp});
 
         // FIXME: This isn't a hard error. Allow for error reporting.
         // If we allowed this, we would need to know whether the existing page
@@ -190,24 +190,44 @@ namespace Vmm {
         // XXX: Ugly pretend-succes case.
         if (UNLIKELY(count == 0)) return vpage_t{0};
 
+        // The kernel can't allocate kernel memory above the kernel heap end.
         if (vaddr_t{vp + count}.u() > va_kernel_heap_end.u())
             return nullopt; // Out of memory.
 
-        // Allocate physical pages.
-        auto pps = Pmm::alloc(count);
-        if (pps.ok()) {
-            map(vp, *pps, count, flags);
-        } else {
-            // No contiguous physical memory region available.
-            // (should probably divide by two and try again...)
-            for (size_t i = 0; i < count; ++i) {
-                auto pp = Pmm::alloc(1);
-                //assert(pp.ok(), "could not allocate phy page");
-                if (!pp.ok())
-                    return nullopt;
-                map_one(vp+i, *pp, flags);
+        size_t unmapped_count = 0;
+        for (size_t i = 0; i < count; ++i) {
+            if (!resolve_va(vp + i).ok())
+                ++unmapped_count;
+        }
+
+        if (unmapped_count == count) {
+            auto pps = Pmm::alloc(count);
+            if (pps.ok()) {
+                // Happy path!
+                map(vp, *pps, count, flags);
+                return vp;
+            } else {
+                // No contiguous physical memory region available.
             }
         }
+
+        // We need to map pages one by one.
+        for (size_t i = 0; i < count; ++i) {
+            if (resolve_va(vp + i).ok())
+                continue;
+
+            auto pp = Pmm::alloc(1);
+            //assert(pp.ok(), "could not allocate phy page");
+            if (!pp.ok()) {
+                // FIXME should reclaim any already allocated phy pages
+                //       and unmap associated virtual addresses
+                //       (what if there were some pages already mapped from earlier though?)
+                koi(LL::warning).fmt("FIXME: vmm leak\n");
+                return nullopt;
+            }
+            map_one(vp+i, *pp, flags);
+        }
+
         return vp;
     }
     void unmap_free(vpage_t vp) {

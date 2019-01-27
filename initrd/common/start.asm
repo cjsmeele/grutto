@@ -22,29 +22,14 @@ section .text
 global start_
 
 extern main
-extern BSS_START
-extern BSS_END
 extern CTORS_START
 extern CTORS_END
 
 start_:
     xchg bx, bx ; magic break
-    call clear_bss
     call call_constructors
     call main
     xchg bx, bx ; magic break
-    ret
-
-clear_bss:
-    mov ebx, dword BSS_START
-    mov eax, dword BSS_END
-.loop:
-    cmp ebx, eax
-    jge .end
-    mov [ebx], dword 0
-    add ebx, 4
-    jmp .loop
-.end:
     ret
 
 call_constructors:

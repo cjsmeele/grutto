@@ -88,15 +88,10 @@ static void kmain() {
                     , entry_);
 
     if (entry_.ok()) {
-        // ...
+        // NB: This currently still runs on our kernel stack, in kernel mode.
+        koi.fmt("Running ELF...\n");
+        koi.fmt("ELF execution result: {#08x}\n", ((u32(*)())*entry_)());
     }
-
-    // assert(vaddr_t{buf}.is_aligned(page_size), "not aligned");
-    // paddr_t tgt = *Vmm::va_to_pa(buf);
-    // koi.fmt("tgt {}\n", tgt);
-    // Vmm::map(vpage_t{1_M>>12}, tgt, div_ceil(_size, page_size)+6, Vmm::P_Writable);
-
-    // koi.fmt("result: {}\n", ((int(*)())(u32*)1_M)()); // ¯\_(ツ)_/¯
 
     auto start_time = uptime();
     for (u64 i = 0;; ++i) {
