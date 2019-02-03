@@ -18,7 +18,23 @@
 #include "panic.hh"
 
 void stdfail() {
+    asm_magic();
     panic();
+}
+
+void mallocfail() {
+    asm_magic();
+    panic();
+}
+void mallocfail_corrupt(void *m) {
+    stdtrace("kernel malloc corruption.\n");
+    asm_magic();
+    mallocfail();
+}
+
+void mallocfail_pebcak(void *m, void *p) {
+    stdtrace("kernel malloc usage error.\n");
+    mallocfail();
 }
 
 void panic() {

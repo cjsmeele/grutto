@@ -19,12 +19,16 @@
 #define HAVE_MORECORE 1
 #define HAVE_MMAP 0
 #define MORECORE Kmm::more_core
-#define ABORT panic()
-#define MALLOC_FAILURE_ACTION panic()
+#define ABORT stdfail()
+#define MALLOC_FAILURE_ACTION      mallocfail()
+#define CORRUPTION_ERROR_ACTION(m) mallocfail_corrupt(m)
+#define USAGE_ERROR_ACTION(m,p)    mallocfail_pebcak(m,p)
 #define USE_DL_PREFIX
 
-
-extern void panic();
+extern void mallocfail();
+extern void mallocfail_corrupt(void *m);
+extern void mallocfail_pebcak(void *m, void *p);
+extern void stdfail();
 
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wextra"
