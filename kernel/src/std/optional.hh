@@ -30,8 +30,11 @@ class Either;
 // (needed below for Optional<T> -> Either<L,T> conversion)
 template<typename T> struct Left_  { T v; };
 template<typename T> struct Right_ { T v; };
-template<typename T> constexpr Left_<T>  Left (const T &v) { return Left_<T>{v}; }
-template<typename T> constexpr Right_<T> Right(const T &v) { return Right_<T>{v}; }
+template<typename T> constexpr  Left_<T> Left (const T  &v) { return  Left_<T>{v}; }
+template<typename T> constexpr Right_<T> Right(const T  &v) { return Right_<T>{v}; }
+template<typename T> constexpr Right_<T> Right(      T &&v) { return Right_<T>{move(v)}; }
+template<typename T> constexpr  Left_<T> Left (      T &&v) { return  Left_<T>{move(v)}; }
+
 constexpr Left_<const char*>  Left (const char *v) { return Left_<const char*>{v}; }
 
 template<typename T>
@@ -59,11 +62,15 @@ public:
     constexpr explicit operator bool   () const { return tag; }
     constexpr                   bool ok() const { return tag; }
 
-    T &operator*()   const { return *ptr(); }
-    T *operator->()  const { return  ptr(); }
+    const T &operator*()   const { return *ptr(); }
+    const T *operator->()  const { return  ptr(); }
+          T &operator*()         { return *ptr(); }
+          T *operator->()        { return  ptr(); }
 
     Optional &operator=(const T &x)        { *ptr() = x; tag = true;  return *this; }
     Optional &operator=(const nullopt_t &) {             tag = false; return *this; }
+    Optional &operator=(const Optional &o) { return o.tag ? *this = *o : *this = nullopt; }
+    Optional &operator=(Optional &&o)      { return o.tag ? *this = move(*o) : *this = nullopt; }
 
     template<typename U> struct optionalify              { using type = Optional<U>; };
     template<typename U> struct optionalify<Optional<U>> { using type = Optional<U>; };
@@ -75,7 +82,7 @@ public:
     // template<typename L, typename R> struct optionalify<Either<L,R>> { using type = Either<L,R>; };
 
     template<typename F>
-    constexpr auto then(F f) -> typename optionalify<typename result_of<F, T>::type>::type {
+    constexpr auto then(F f) -> typename optionalify<typename result_of<F, const T&>::type>::type {
         if (tag) return f(**this);
         else     return nullopt;
     }
@@ -92,7 +99,7 @@ public:
     }
 
     constexpr auto require(bool b) -> Optional {
-        if (tag) return b ? *this : nullopt;
+        if (tag) return b ? move(*this) : nullopt;
         else     return nullopt;
     }
 
@@ -100,26 +107,23 @@ public:
     constexpr auto require(F f)
         -> typename enable_if<is_callable<F, const T&>::value, Optional>::type {
 
-        if (tag) return f(const_cast<const T&>(**this)) ? *this : nullopt;
+        if (tag) return f(const_cast<const T&>(**this)) ? move(*this) : nullopt;
         else     return nullopt;
     }
 
     // Create an Either by providing an annotation for the nullopt case.
     template<typename L>
     constexpr auto note(L l) -> Either<L,T> {
-        if (tag) return Right(**this);
-        else     return Left(l);
+        if (tag) return Right(move(**this));
+        else     return Left(move(l));
     }
 
-    // // Same, but get the annotation from a function.
-    // template<typename F>
-    // constexpr auto annotate(enable_if<is_callable<F>::value, F> f)
-    //     -> Either<typename result_of<F>::type,T> {
-    //     if (tag) return **this;
-    //     else     return f();
-    // }
-
     constexpr Optional()          : tag(false) { }
+    constexpr Optional(const Optional &o) = delete;
+    constexpr Optional(Optional &&o) {
+        if (o.tag) *this = move(*o);
+        else       *this = nullopt;
+    }
     constexpr Optional(nullopt_t) : tag(false) { }
     constexpr Optional(const T &x) { (*this) = x; }
 };

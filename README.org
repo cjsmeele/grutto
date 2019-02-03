@@ -82,7 +82,8 @@ c++2a support. The version packaged in Arch Linux works fine.
 If you get linker errors on ~clang_rt.builtins-i386~, edit LDLIBPATH in
 ~kernel/Makefile~ to point to the right location for your clang version.
 
-To build and run the OS, run the following:
+To build and run the OS, clone this repo with ~git clone --recursive~, and run
+the following:
 
 : make -j4 run
 

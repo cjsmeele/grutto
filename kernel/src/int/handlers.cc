@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -84,7 +84,6 @@ extern "C" {
     };
 
 
-    //void common_exception_handler(Int::interrupt_frame *frame) __attribute__((noinline));
     void common_exception_handler(Int::interrupt_frame *frame) {
 
         koi(LL::critical).fmt
@@ -112,35 +111,36 @@ extern "C" {
         panic();
     }
 
-    //void common_interrupt_handler(Int::interrupt_frame *frame) __attribute__((noinline));
     void common_interrupt_handler(Int::interrupt_frame *frame) {
-        //dink('z');
-        auto int_no = frame->int_no;
         if (frame->int_no == 0x20) {
             ++Time::systick_counter;
             if (Int::ticker && Time::systick_counter % 10 == 0)
                 Int::ticker(frame);
 
-        } else if (frame->int_no == 0x80) {
+            // TODO: Call scheduler.
+
+        } else if (frame->int_no == 0xca) {
             // Userspace called!
-            // (well, not actually userspace yet, but let's pretend this is a syscall)
 
             if (frame->eax == 0xbeeeeeef) {
                 // Reading and printing random strings from userspace-supplied
                 // addresses seems like a safe thing to do.
                 koi.fmt("{}", (const char*)frame->ebx);
             } else if (frame->eax == 0xbeeeeef) {
-                koi.fmt("{}", (int)frame->ebx);
+                koi.fmt("{}", (u32)frame->ebx);
+            } else if (frame->eax == 0xffd1ed1e) {
+                // Gotta have some easy way to stop spinning the CPU after
+                // we've entered user-mode.
+                koi.fmt("\nkernel: halting on user request.\n");
+                hang();
             } else {
-                koi.fmt("got an unknown sycall request: {08x}\n", static_cast<s32>(frame->eax));
+                koi.fmt("got an unknown syscall request: {08x}\n", static_cast<s32>(frame->eax));
             }
 
         } else {
             koi(LL::warning).fmt(">>> unhandled irq {#04x}\n", frame->int_no);
         }
 
-        //Int::Pic::ack(frame->int_no >= 0x28 && frame->int_no < 0x30);
-        Int::Pic::ack(int_no >= 0x28 && int_no < 0x30);
-        //Int::sti();
+        Int::Pic::ack(frame->int_no >= 0x28 && frame->int_no < 0x30);
     }
 }

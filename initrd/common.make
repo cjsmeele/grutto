@@ -90,6 +90,7 @@ CXXFLAGS :=                            \
 	-mno-sse                           \
 	-std=c++2a                         \
 	-pipe                              \
+	-isystem ../common                 \
 	$(CXXWARNINGS)
 
 

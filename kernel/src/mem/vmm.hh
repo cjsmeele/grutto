@@ -53,7 +53,7 @@
 // ├────────────────────┤ 0xff40'0000
 // ├────────────────────┤ 0xffff'1000
 // │ Kernel stack       │
-// ├────────────────────┤ 0xffff'6000
+// ├────────────────────┤ 0xffff'5000
 // └────────────────────┘ 0xffff'ffff
 
 namespace Vmm {
@@ -72,6 +72,11 @@ namespace Vmm {
     static_assert(alignof(pdir_t) == 4_K, "Page directory type is not aligned");
     static_assert( sizeof(pdir_t) == 4_K);
     static_assert( sizeof(ptab_t) == 4_K);
+
+    // Returns the current page directory.
+    // Note: Page directories are always allocated in kernel memory,
+    //       so this reference remains valid after switching pdirs.
+    pdir_t &current_pd();
 
     // va_pts always points to the 4M va-region where page tables for the
     // current task are mapped ("recursive mapping").

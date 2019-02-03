@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -51,7 +51,7 @@ namespace Pci {
 
         // Enumerate PCI devices.
 
-        auto ll = LL::debug;
+        auto ll = LL::null;
 
         for (int bus = 0; bus < 256; ++bus) {
             for (int slot = 0; slot < 32; ++slot) {

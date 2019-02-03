@@ -19,9 +19,9 @@
 
 // This makes me happy.
 
-#define λ(...)   ([&]()               { return (__VA_ARGS__); })
-#define λ_(...)  ([&](auto)           { return (__VA_ARGS__); })
-#define λx(...)  ([&](auto x)         { return (__VA_ARGS__); })
-#define λy(...)  ([&](auto y)         { return (__VA_ARGS__); })
-#define λz(...)  ([&](auto z)         { return (__VA_ARGS__); })
-#define λxy(...) ([&](auto x, auto y) { return (__VA_ARGS__); })
+#define λ(...)   ([&]()                 { return (__VA_ARGS__); })
+#define λ_(...)  ([&](auto &)           { return (__VA_ARGS__); })
+#define λx(...)  ([&](auto &x)          { return (__VA_ARGS__); })
+#define λy(...)  ([&](auto &y)          { return (__VA_ARGS__); })
+#define λz(...)  ([&](auto &z)          { return (__VA_ARGS__); })
+#define λxy(...) ([&](auto &x, auto &y) { return (__VA_ARGS__); })

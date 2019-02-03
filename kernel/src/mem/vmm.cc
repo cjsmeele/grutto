@@ -281,9 +281,10 @@ namespace Vmm {
             if (i < 768) {
                 if (pde_present(current_pdir[i]))
                     koi.fmt("present userspace pde: {08x} @{}\n", current_pdir[i], &current_pdir[i]);
-                assert(!pde_present(current_pdir[i]),
-                       "TODO: Copy pagetables and phy pages for userspace stuff?");
+                //assert(!pde_present(current_pdir[i]),
+                //       "TODO: Copy pagetables and phy pages for userspace stuff?");
                 pdir[i] = 0;
+                ptab[i] = 0;
             } else {
                 pdir[i] = current_pdir[i];
                 // kernel ptabs need not be cloned, they are the same for all tasks.

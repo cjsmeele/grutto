@@ -101,20 +101,21 @@ LD      := ld.lld
 
 ASFLAGS  := -f elf32 -g dwarf2
 
-CXXWARNINGS :=             \
-	-Wall                  \
-	-Wextra                \
-	-Wpedantic             \
-	-Werror=return-type    \
-	-Werror=unused-result  \
-	-Wshadow               \
-	-Wpointer-arith        \
-	-Wcast-align           \
-	-Wwrite-strings        \
-	-Wmissing-declarations \
-	-Wredundant-decls      \
-	-Winline               \
-	-Wuninitialized        \
+CXXWARNINGS :=              \
+	-Wall                   \
+	-Wextra                 \
+	-Wpedantic              \
+	-Werror=return-type     \
+	-Werror=unused-result   \
+	-Werror=return-std-move \
+	-Wshadow                \
+	-Wpointer-arith         \
+	-Wcast-align            \
+	-Wwrite-strings         \
+	-Wmissing-declarations  \
+	-Wredundant-decls       \
+	-Winline                \
+	-Wuninitialized         \
 	-Wno-unused-parameter
 
 CXXFLAGS :=                            \
@@ -191,7 +192,9 @@ $(DEPFILE): $(DEPFILES)
 
 # Include generated dependencies if we're compiling or linking.
 ifeq (,$(filter $(MAKECMDGOALS),dep doc res clean))
+ifeq (,$(findstring B,$(MAKEFLAGS)))
 -include $(DEPFILE)
+endif
 endif
 
 bin: res $(BINFILE)

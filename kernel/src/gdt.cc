@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -18,35 +18,6 @@
 #include "gdt.hh"
 
 namespace Gdt {
-
-    struct tss_t {
-        u16 prev_task; u16 pad_0;
-        u32 esp0;
-        u16 ss0;   u16 pad_1;
-        u32 esp1;
-        u16 ss1;   u16 pad_2;
-        u32 esp2;
-        u16 ss2;   u16 pad_3;
-        u32 cr3;
-        u32 eip;
-        u32 eflags;
-        u32 eax;
-        u32 ecx;
-        u32 edx;
-        u32 ebx;
-        u32 esp;
-        u32 ebp;
-        u32 esi;
-        u32 edi;
-        u16 es;    u16 pad_4;
-        u16 cs;    u16 pad_5;
-        u16 ss;    u16 pad_6;
-        u16 ds;    u16 pad_7;
-        u16 fs;    u16 pad_8;
-        u16 gs;    u16 pad_9;
-        u16 ldtss; u16 pad_10;
-        u16 trap;  u16 iomap_offset;
-    } __attribute__((packed));
 
     using desc_t = u64;
 
@@ -79,7 +50,6 @@ namespace Gdt {
                       "mov %%ax,  %%fs \n"
                       "mov %%ax,  %%gs \n"
                       "mov %%ax,  %%ss \n"
-                      "mov %%ax,  %%ax \n"
                       "ljmpl %[nc], $new_cs___ \n"
                       "new_cs___: \n"
                       "mov %[nt], %%ax \n"
@@ -95,7 +65,15 @@ namespace Gdt {
 
     tss_t tss { };
 
+    void set_tss_sp(vaddr_t sp) {
+        tss.esp0 = sp.u();
+        tss.ss0  = 2*8; // Keep in sync with segment order specified in init().
+                        // This must always be kdata.
+    }
+
     void init() {
+        tss.iomap_offset = sizeof(tss_t);
+
         gdt[0]  = make_desc_null();
         gdt[1]  = make_desc_kcode();
         gdt[2]  = make_desc_kdata();

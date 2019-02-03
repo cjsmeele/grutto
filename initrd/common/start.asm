@@ -26,11 +26,16 @@ extern CTORS_START
 extern CTORS_END
 
 start_:
-    xchg bx, bx ; magic break
+    ;xchg bx, bx ; magic break
     call call_constructors
     call main
-    xchg bx, bx ; magic break
-    ret
+    ;xchg bx, bx ; magic break
+.hang:
+    ;; Nicely ask the kernel to hang.
+    ;; (this should be some sort of exit syscall)
+    mov eax, 0xffd1ed1e
+    int 0xca
+    jmp .hang
 
 call_constructors:
     mov ebx, dword CTORS_START

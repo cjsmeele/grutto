@@ -73,16 +73,16 @@ public:
     }
 
 
-    T &&dequeue() {
+    T dequeue() {
         if (UNLIKELY(length_ == 0)) {
             stdtrace("Queue underflow");
             stdfail();
         }
 
-        auto item = move(items[i_reader].thing);
+        T item = move(items[i_reader].thing);
 
-        items[length_].thing.~T();
-        items[length_]._ = null_item_t { }; // For good measure.
+        items[i_reader].thing.~T();
+        items[i_reader]._ = null_item_t { }; // For good measure.
 
         increment(i_reader);
         --length_;

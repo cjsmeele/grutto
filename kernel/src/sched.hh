@@ -25,6 +25,7 @@ namespace Sched {
     task_t *current_task();
 
     void add_task(own_ptr<task_t> task);
+    void switch_task();
 
     void init();
 }

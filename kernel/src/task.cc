@@ -15,24 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with Grutto.  If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
-
+#include "task.hh"
+#include "elf.hh"
 #include "mem/vmm.hh"
 
-struct task_t {
-    using stack_word_t = int;
-    constexpr static size_t per_task_kernel_stack_words = 256;
-
-    int id;
-    Vmm::pdir_t *pdir;
-    vaddr_t stack;
-    vaddr_t pc;
-
-    stack_word_t  kstack_[per_task_kernel_stack_words];
-    stack_word_t *kstack_top = &kstack_[per_task_kernel_stack_words];
-};
-
 namespace Task {
+
     Either<const char*, own_ptr<task_t>>
-    from_elf(vaddr_t elf_start, size_t elf_size);
+    from_elf(vaddr_t elf_start, size_t elf_size) {
+
+        auto *pd = Vmm::clone_pd();
+        if (!pd) return Left("could not clone pdir");
+
+        auto &current_pd = Vmm::current_pd();
+        Vmm::switch_pd(*pd);
+
+        auto entry_ = Elf::load(elf_start, elf_size);
+
+        Vmm::switch_pd(current_pd);
+
+        if (!entry_) return Left(entry_.left());
+
+        auto task = own_ptr<task_t>(new task_t);
+
+        // TODO: Remove magic numbers.
+        task->stack = vaddr_t{0xc000'0000UL - 4_K};
+        task->pc    = *entry_;
+        task->pdir  = pd;
+
+        return Right(move(task));
+    }
+
 }

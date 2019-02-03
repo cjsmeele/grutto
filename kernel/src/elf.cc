@@ -163,8 +163,8 @@ namespace Elf {
         // * Load segments.
 
         for (const auto *phe : segments) {
-            koi.fmt("> PT_LOAD: offset<{08x}> va<{}> file<{6S}> mem<{6S}>\n",
-                    phe->offset, vaddr_t{phe->v_addr}, phe->size_file, phe->size_mem);
+            // koi.fmt("> PT_LOAD: offset<{08x}> va<{}> file<{6S}> mem<{6S}>\n",
+            //         phe->offset, vaddr_t{phe->v_addr}, phe->size_file, phe->size_mem);
 
             auto span = span_t { u32{phe->offset}, u32{phe->size_file + phe->size_mem} };
             if (!Vmm::map_alloc(vaddr_t{phe->v_addr}.align_down(page_size),
@@ -179,6 +179,14 @@ namespace Elf {
             // Actually load stuff!
             memcpy((char*)phe->v_addr,                elf_base.offset(phe->offset), phe->size_file);
             memset((char*)phe->v_addr+phe->size_file, 0,                            phe->size_mem);
+        }
+
+        // XXX: Not sure if this should be here.
+        //      Allocate a stack.
+        if (!Vmm::map_alloc(vaddr_t{0xc000'0000UL - 8_K},
+                            div_ceil(4_K, page_size),
+                            Vmm::P_User | Vmm::P_Writable).ok()) {
+                return Left("could not allocate stack for ELF image");
         }
 
         return Right(vaddr_t{header.entry});

@@ -123,3 +123,8 @@ struct is_callable {
 
     static constexpr bool value = impl<F,list_<As...>>::value;
 };
+
+template<typename T>
+constexpr typename remove_ref<T>::type&& move(T &&x) {
+    return static_cast<typename remove_ref<T>::type&&>(x);
+}

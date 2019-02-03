@@ -65,13 +65,17 @@ public:
     // To allow for reducing to an Optional within a then().then()... chain.
     constexpr Optional<R> as_opt() { return static_cast<Optional<R>>(*this); }
 
-    constexpr const R &operator*()       { return right(); }
-    constexpr       R &operator*() const { return right(); }
+    constexpr const R &operator*() const { return right(); }
+    constexpr       R &operator*()       { return right(); }
 
-    constexpr Either &operator=(const Right_<R> &x) { right() = x.v; tag = true;  return *this; }
-    constexpr Either &operator=(const Left_<L>  &x) { left()  = x.v; tag = false; return *this; }
-    constexpr Either &operator=(const R &x)         { right() = x;   tag = true;  return *this; }
-    constexpr Either &operator=(const L &x)         { left()  = x;   tag = false; return *this; }
+    constexpr Either &operator=(const Right_<R>  &x) { right() = x.v;       tag = true;  return *this; }
+    constexpr Either &operator=(const Left_<L>   &x) { left()  = x.v;       tag = false; return *this; }
+    constexpr Either &operator=(      Right_<R> &&x) { right() = move(x.v); tag = true;  return *this; }
+    constexpr Either &operator=(      Left_<L>  &&x) { left()  = move(x.v); tag = false; return *this; }
+    constexpr Either &operator=(const R  &x)         { right() = x;         tag = true;  return *this; }
+    constexpr Either &operator=(const L  &x)         { left()  = x;         tag = false; return *this; }
+    constexpr Either &operator=(      R &&x)         { right() = move(x);   tag = true;  return *this; }
+    constexpr Either &operator=(      L &&x)         { left()  = move(x);   tag = false; return *this; }
 
     // This should perhaps assert U /= Either<M,T>, so that we do not
     // accidentally nest Eithers with different error types.
@@ -82,7 +86,7 @@ public:
     // Chain either-operations.
     template<typename F>
     constexpr auto then(F f)
-        -> typename eitherify<typename result_of<F, R>::type>::type {
+        -> typename eitherify<typename result_of<F, R&>::type>::type {
 
         if (tag) return f(right());
         else     return left();
@@ -92,7 +96,7 @@ public:
     // (lifts the Optional into Either context)
     template<typename F>
     constexpr auto then(F f, L l)
-        -> typename eitherify<typename result_of<F, R>::type>::type {
+        -> typename eitherify<typename result_of<F, R&>::type>::type {
 
         if (tag) return f(right()).note(l);
         else     return left();
@@ -106,14 +110,14 @@ public:
 
     // "Catch" Left.
     template<typename F>
-    constexpr auto orelse(F f) -> typename enable_if<is_callable<F,const L&>::value, R>::type {
+    constexpr auto orelse(F f) -> typename enable_if<is_callable<F,L&>::value, R>::type {
         if (tag) return right();
         else     return f(const_cast<const L&>(left()));
     }
 
     // "Catch" Left, but ignore its value.
     template<typename F>
-    constexpr auto orelse(F f) -> typename enable_if<is_callable<F>::value, R>::type  {
+    constexpr auto orelse(F f) -> typename enable_if<is_callable<F>::value, R&>::type  {
         if (tag) return right();
         else     return f();
     }
@@ -133,11 +137,22 @@ public:
 
     constexpr Either() { (*this) = L { }; }
 
-    constexpr Either(const L &x) { (*this) = x; }
-    constexpr Either(const R &x) { (*this) = x; }
+    constexpr Either(const Either &o) = delete;
 
-    constexpr Either(const Left_<L>  &x) { (*this) = x; }
-    constexpr Either(const Right_<R> &x) { (*this) = x; }
+    constexpr Either(Either &&o) {
+        if (o.tag) (*this) = move(o.right());
+        else       (*this) = move(o.left());
+    }
+
+    constexpr Either(const L  &x) { (*this) = x; }
+    constexpr Either(const R  &x) { (*this) = x; }
+    constexpr Either(      L &&x) { (*this) = move(x); }
+    constexpr Either(      R &&x) { (*this) = move(x); }
+
+    constexpr Either(const  Left_<L>  &x) { (*this) = x; }
+    constexpr Either(const Right_<R>  &x) { (*this) = x; }
+    constexpr Either(       Left_<L> &&x) { (*this) = move(x); }
+    constexpr Either(      Right_<R> &&x) { (*this) = move(x); }
 };
 
 // alias name?

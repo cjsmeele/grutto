@@ -27,6 +27,8 @@
 #include "pci.hh"
 #include "initrd.hh"
 #include "elf.hh"
+#include "task.hh"
+#include "sched.hh"
 
 // nnoremap <F5> :w \| split \| terminal make -Bj8 && make -C.. run NOVGA=1<CR>
 //register int sp asm ("sp");
@@ -68,29 +70,24 @@ static void kmain() {
 
     Pci::init();
 
-    {
-        auto *pd = Vmm::clone_pd();
-        koi(LL::debug).fmt("ik switch naar pdir va:{} pa:{}\n\n", pd, *Vmm::va_to_pa(vaddr_t{pd}));
-        Vmm::switch_pd(*pd);
-    }
-
     RESDECLT_(initrd, initrd, u8);
     Initrd::init(initrd, initrd_size);
     Initrd::dump();
 
-    auto entry_ = Initrd::get_file("hello.elf")
-                         .note("file not found in initrd")
-                         .then(λx(Elf::load(x.data, x.size)));
+    const char *task_name = "hello.elf";
+    auto task_ = Initrd::get_file(task_name)
+                        .note("initial task not found in initrd")
+                        .then(λx(Task::from_elf(x.data, x.size)));
 
-    koi.fmt("{}{}\n", entry_.ok()
-                        ? "ELF geladen! entrypoint @"
-                        : "ELF niet OK: "
-                    , entry_);
+    if (task_.ok()) {
+        koi.fmt("\nRunning '{}' task in user-mode...\n\n", task_name);
+        Sched::init();
+        Sched::add_task(move(*task_));
+        Sched::switch_task();
 
-    if (entry_.ok()) {
-        // NB: This currently still runs on our kernel stack, in kernel mode.
-        koi.fmt("Running ELF...\n");
-        koi.fmt("ELF execution result: {#08x}\n", ((u32(*)())*entry_)());
+        // XXX: (switch_task does not return)
+    } else {
+        koi.fmt("\nCould not load {} user task: {}\n", task_name, task_.left());
     }
 
     auto start_time = uptime();

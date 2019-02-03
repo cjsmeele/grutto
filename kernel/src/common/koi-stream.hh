@@ -26,6 +26,7 @@ enum class LL {
     warning,
     notice,
     debug,
+    null,
 };
 
 class KoiStream : public IoStream {
