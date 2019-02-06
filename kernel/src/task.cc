@@ -21,6 +21,8 @@
 
 namespace Task {
 
+    static int count = 0;
+
     Either<const char*, own_ptr<task_t>>
     from_elf(vaddr_t elf_start, size_t elf_size) {
 
@@ -42,6 +44,7 @@ namespace Task {
         task->stack = vaddr_t{0xc000'0000UL - 4_K};
         task->pc    = *entry_;
         task->pdir  = pd;
+        task->id    = ++count;
 
         return Right(move(task));
     }

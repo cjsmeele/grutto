@@ -27,8 +27,8 @@ namespace Pit {
     //constexpr u16 divider =    1193/4; // ~4 KHz system clock.
     //constexpr u16 divider =    1193/2; // ~2 KHz system clock.
     //constexpr u16 divider =  1*1193; // ~1 KHz system clock.
-    //constexpr u16 divider =  2*1193; // 500 Hz system clock.
-    constexpr u16 divider =  4*1193; // 250 Hz system clock.
+    constexpr u16 divider =  2*1193; // 500 Hz system clock.
+    //constexpr u16 divider =  4*1193; // 250 Hz system clock.
     //constexpr u16 divider =  8*1193; // 125 Hz system clock.
     //constexpr u16 divider = 16*1193; // 68 Hz system clock.
     //constexpr u16 divider = 32*1193;  // 34 Hz system clock.

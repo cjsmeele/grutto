@@ -1,17 +1,12 @@
 #include <grutto.hh>
 
 int main() {
-    print("hi! user-mode works :-)\n");
+    print("greetings from user space :-)\n");
 
-    for (volatile int i = 0; i < 10; ++i) {
-        print("greetings from actual userspace! :D (x");
-        print(i+1);
-        print(")\n");
-    }
+    int pid = getpid();
 
-    print("\nuser-mode will now try to exec a privileged insn (this should raise a GPF)\n");
-
-    asm volatile("cli");
+    while (true)
+        print(static_cast<char>('A' + pid - 1));
 
     return 0xdeadb011;
 }

@@ -1,11 +1,10 @@
-volatile int y = 42;
-volatile int z;
+#include <grutto.hh>
 
 int main() {
-    volatile int x = y;
+    for (int i = 0;; ++i) {
+        print((i & 1) == 0 ? "/beep/" : "/boop/");
+        yield();
+    }
 
-    z = x + 5;
-    while (true)
-        asm volatile("int $0x80");
-    return z;
+    return 0xdeadb012;
 }

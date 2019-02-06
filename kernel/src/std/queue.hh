@@ -42,8 +42,8 @@ class FixedQueue {
 
     void increment(size_t &i) {
         if (UNLIKELY(i == Cap - 1))
-             i = i + 1;
-        else i = 0;
+             i = 0;
+        else i = i + 1;
     };
 
 public:

@@ -17,6 +17,7 @@
  */
 #include "handlers.hh"
 #include "pic.hh"
+#include "sched.hh"
 
 struct interrupt_frame;
 
@@ -34,7 +35,7 @@ static void dump_frame(OStream &o, Int::interrupt_frame &frame) {
     };
 
     fmtone("eax", frame.eax); fmtone("cs", frame.cs); fmtone("eip", frame.eip); o.put_char('\n');
-    fmtone("ebx", frame.ebx); fmtone("ss", frame.ss); fmtone("esp", frame.esp); o.put_char('\n');
+    fmtone("ebx", frame.ebx); fmtone("ss", frame.ss); fmtone("esp", frame.esp); fmtone("usp", frame.useresp); o.put_char('\n');
     fmtone("ecx", frame.ecx); fmtone("ds", frame.ds); fmtone("ebp", frame.ebp); o.put_char('\n');
     fmtone("edx", frame.edx); fmtone("es", frame.es); fmtone("cr0", asm_cr0()); o.put_char('\n');
     fmtone("esi", frame.esi); fmtone("fs", frame.fs); fmtone("cr2", asm_cr2()); o.put_char('\n');
@@ -85,6 +86,7 @@ extern "C" {
 
 
     void common_exception_handler(Int::interrupt_frame *frame) {
+        Int::enabled_ = false; // Make kernel code aware that interrupts are disabled.
 
         koi(LL::critical).fmt
            ("\n>>> exception {2} ({02x}:{02x}: {}) at {08x}\n\n"
@@ -111,13 +113,20 @@ extern "C" {
         panic();
     }
 
+    void int_yield_task(Int::interrupt_frame *frame) {
+
+        // End the current task's timeslice.
+
+        Sched::maybe_switch_task(*frame);
+    }
+
     void common_interrupt_handler(Int::interrupt_frame *frame) {
+        Int::enabled_ = false; // Make kernel code aware that interrupts are disabled.
+
         if (frame->int_no == 0x20) {
             ++Time::systick_counter;
-            if (Int::ticker && Time::systick_counter % 10 == 0)
-                Int::ticker(frame);
-
-            // TODO: Call scheduler.
+            if (Time::systick_counter % Sched::jiffies_per_slice == 0)
+                int_yield_task(frame);
 
         } else if (frame->int_no == 0xca) {
             // Userspace called!
@@ -128,6 +137,10 @@ extern "C" {
                 koi.fmt("{}", (const char*)frame->ebx);
             } else if (frame->eax == 0xbeeeeef) {
                 koi.fmt("{}", (u32)frame->ebx);
+            } else if (frame->eax == 0x00071e1d) {
+                int_yield_task(frame);
+            } else if (frame->eax == 0x0000001d) {
+                frame->eax = Sched::current_task()->id;
             } else if (frame->eax == 0xffd1ed1e) {
                 // Gotta have some easy way to stop spinning the CPU after
                 // we've entered user-mode.
@@ -141,6 +154,7 @@ extern "C" {
             koi(LL::warning).fmt(">>> unhandled irq {#04x}\n", frame->int_no);
         }
 
+        Int::enabled_ = true;
         Int::Pic::ack(frame->int_no >= 0x28 && frame->int_no < 0x30);
     }
 }

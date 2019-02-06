@@ -74,22 +74,30 @@ static void kmain() {
     Initrd::init(initrd, initrd_size);
     Initrd::dump();
 
-    const char *task_name = "hello.elf";
-    auto task_ = Initrd::get_file(task_name)
-                        .note("initial task not found in initrd")
-                        .then(λx(Task::from_elf(x.data, x.size)));
+    // Disable interrupts while we initialize scheduling.
+    Int::cli();
+    Sched::init();
 
-    if (task_.ok()) {
-        koi.fmt("\nRunning '{}' task in user-mode...\n\n", task_name);
-        Sched::init();
-        Sched::add_task(move(*task_));
-        Sched::switch_task();
+    auto load_task = λx(Initrd::get_file(x)
+                       .note("task file not found in initrd")
+                       .then(λx(Task::from_elf(x.data, x.size))));
 
-        // XXX: (switch_task does not return)
-    } else {
-        koi.fmt("\nCould not load {} user task: {}\n", task_name, task_.left());
-    }
+    auto load_and_enqueue_task = λx(load_task(x).then_do(λx(Sched::add_task (move(x)))),0);
+    auto load_and_execute_task = λx(load_task(x).then_do(λx(Sched::exec_task(move(x)))),0);
 
+    // Load the same task multiple times.
+    // (they will find and print their own PID in a loop).
+
+    load_and_enqueue_task("hello.elf");
+    load_and_enqueue_task("hello.elf");
+    load_and_enqueue_task("hello2.elf");
+    load_and_enqueue_task("hello.elf");
+    load_and_execute_task("hello.elf");
+
+    // (control flow does not return after exec_task)
+}
+
+[[maybe_unused]] static void spin() {
     auto start_time = uptime();
     for (u64 i = 0;; ++i) {
         auto up = uptime();

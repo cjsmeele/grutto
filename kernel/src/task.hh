@@ -18,16 +18,23 @@
 #pragma once
 
 #include "mem/vmm.hh"
+#include "int/handlers.hh"
 
 struct task_t {
     using stack_word_t = int;
     constexpr static size_t per_task_kernel_stack_words = 256;
+
+    bool started = false;
 
     int id;
     Vmm::pdir_t *pdir;
     vaddr_t stack;
     vaddr_t pc;
 
+    Int::interrupt_frame frame;
+
+    // NOTE: Per-task kernel stack should be mostly useless until we allow the
+    //       kernel to be interrupted during syscalls.
     stack_word_t  kstack_[per_task_kernel_stack_words];
     stack_word_t *kstack_top = &kstack_[per_task_kernel_stack_words];
 };

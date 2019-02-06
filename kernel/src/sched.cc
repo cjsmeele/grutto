@@ -18,55 +18,110 @@
 #include "sched.hh"
 #include "mem/vmm.hh"
 #include "gdt.hh"
+#include "int/handlers.hh" // XXX
 
 namespace Sched {
 
     own_ptr<task_t> current_task_ = nullptr;
-    task_t *current_task() { return *current_task_; }
+    task_t *current_task()                     { return *current_task_; }
+    task_t *current_task(own_ptr<task_t> task) { return *(current_task_ = move(task)); }
 
     Queue<own_ptr<task_t>, 64> ready_queue;
 
-    void add_task(own_ptr<task_t> task) {
+    void switch_task(own_ptr<task_t> task, Int::interrupt_frame &frame) {
 
-        ready_queue.enqueue(move(task));
-    }
+        // This switches address spaces and switches out the interrupt frame,
+        // such that when iret is invoked, we continue the given task.
 
-    void switch_task() {
-        if (LIKELY(current_task())) {
-            // TODO.
+        if (UNLIKELY(current_task() == nullptr)) {
+            Vmm::switch_pd(*task->pdir);
+            Gdt::set_tss_sp(task->kstack_top);
+        }
+
+        //koi.fmt("sw<{}>", task->id);
+
+        current_task_->stack = vaddr_t{frame.esp};
+        current_task_->pc    = vaddr_t{frame.eip};
+        current_task_->frame = frame;
+
+        // XXX: This assumption is invalid for blocking syscalls
+        ready_queue.enqueue(move(current_task_));
+
+        auto &next = current_task_ = move(task);
+
+        Vmm::switch_pd(*next->pdir);
+        Gdt::set_tss_sp(next->kstack_top);
+
+        if (LIKELY(next->started)) {
+            // Restore state of the task we are resuming.
+            auto int_no   = frame.int_no;
+            frame         = next->frame;
+            frame.int_no  = int_no; // Make sure we return from the current interrupt correctly.
         } else {
-            assert(ready_queue.length(), "no task to switch to");
-            auto &next = current_task_ = ready_queue.dequeue();
-
-            Vmm::switch_pd(*next->pdir);
-            Gdt::set_tss_sp(next->kstack_top);
-
-            asm volatile (// Set user-mode segments.
-                          "mov %[udn], %%eax \n"
-                          "mov %%ax,   %%ds \n"
-                          "mov %%ax,   %%es \n"
-                          "mov %%ax,   %%fs \n"
-                          "mov %%ax,   %%gs \n"
-                          "mov %%ax,   %%ax \n"
-                          // Push user data sel & task's SP.
-                          "push %%eax \n"
-                          "push %[stack] \n"
-                          "pushf \n"
-                          // Push user code sel & task's PC.
-                          "push %[ucn]\n"
-                          "push %[pc]\n"
-                          //"xchgw %%bx,%%bx\n"
-                          "iret"
-                         : // TODO: Remove magic numbers.
-                         : [ucn]    "i" (3*8+3)
-                         , [udn]    "i" (4*8+3)
-                         , [stack]  "b" (next->stack.u())
-                         , [pc]     "d" (next->pc.u())
-                         : "memory","eax");
+            // No state to restore - create one based on the task's entrypoint.
+            frame.edi     = 0;
+            frame.ebp     = 0;
+            frame.ebx     = 0;
+            frame.edx     = 0;
+            frame.ecx     = 0;
+            frame.eax     = 0;
+            frame.eip     = next->pc.u();
+            frame.useresp = next->stack.u();
+            next->started = true;
         }
     }
 
+    void exec_task(own_ptr<task_t> task) {
+        assert(!current_task(), "exec_task(): current_task not null");
+
+        auto &next = current_task_ = move(task);
+
+        Vmm::switch_pd(*next->pdir);
+        Gdt::set_tss_sp(next->kstack_top);
+
+        next->started = true;
+
+        asm volatile (// Set user-mode segments.
+                      "mov %[udn], %%eax \n"
+                      "mov %%ax,   %%ds \n"
+                      "mov %%ax,   %%es \n"
+                      "mov %%ax,   %%fs \n"
+                      "mov %%ax,   %%gs \n"
+                      "mov %%ax,   %%ax \n"
+                      // Push user data sel & task's SP.
+                      "push %%eax \n"
+                      "push %[stack] \n"
+                      "pushf \n"
+                      "pop  %%eax \n"
+                      // Set IE flag.
+                      "orl  $0x200, %%eax  \n"
+                      "push %%eax \n"
+                      // Push user code sel & task's PC.
+                      "push %[ucn]\n"
+                      "push %[pc]\n"
+                      //"xchgw %%bx,%%bx\n"
+                      "iret"
+                     : // TODO: Remove magic numbers.
+                     : [ucn]    "i" (3*8+3)
+                     , [udn]    "i" (4*8+3)
+                     , [stack]  "b" (next->stack.u())
+                     , [pc]     "d" (next->pc.u()));
+    }
+
+    void add_task(own_ptr<task_t> task) {
+        ready_queue.enqueue(move(task));
+    }
+
+    void maybe_switch_task(Int::interrupt_frame &frame) {
+        // No need to switch if there aren't any other ready tasks.
+        if (UNLIKELY(ready_queue.length() == 0)) return;
+
+        // TODO: Provide a way for processes to enter a blocking state.
+        //       (this would also require some sort of "idle" process.
+
+        switch_task(ready_queue.dequeue(), frame);
+    }
+
     void init() {
-        // TODO.
     }
 }

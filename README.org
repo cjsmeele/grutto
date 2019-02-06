@@ -32,10 +32,12 @@ microkernel OS for 32-bit x86, written in C++.
 - Basic serial terminal
 - Physical memory manager (bitmap-based)
 - Virtual memory manager
-  - Basic support for multiple address spaces
+  - Support for multiple address spaces
 - Kernel heap (through [[http://g.oswego.edu/dl/html/malloc.html][dlmalloc]])
 - Initrd generator and loader
 - ELF loader
+- Dispatcher
+- Some basic syscalls
 
 *** Other niceties that were made just for fun:
 
@@ -47,13 +49,12 @@ microkernel OS for 32-bit x86, written in C++.
 
 *** Stuff that is next up for implementation:
 
-- Switch to user-mode
-- Pre-emptive round-robin scheduler
-- Syscalls
+- Blocking syscalls
 - IPC (message passing and shared memory)
 
 *** Other stuff that will be needed in the future:
 
+- A proper scheduling algorithm
 - Something that can grant tasks access to memory-mapped IO, for drivers in userspace.
 - Keyboard driver
 - Disk drivers

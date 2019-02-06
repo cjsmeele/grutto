@@ -28,25 +28,29 @@ inline int syscallish(u32 a = 0,
                       u32 b = 0,
                       u32 c = 0,
                       u32 d = 0) {
-    int r;
-    asm volatile ("int $0xca\n"
-                  "mov %%eax, %0\n"
-                 :"=r" (r)
+    asm volatile (//"xchgw %%bx, %%bx\n"
+                  "int $0xca\n"
+                 :"+a" (a)
                  :"a"  (a),
                   "b"  (b),
                   "c"  (c),
-                  "d"  (d));
+                  "d"  (d)
+                 :"cc",
+                  "memory");
 
-    return r;
+    return a;
 }
 
-inline void print_string(const char *s) { syscallish(0xbeeeeeef, (u32)s); }
-inline void print_num(int x)            { syscallish(0xbeeeeef, x); }
+inline int print_string(const char *s) { return syscallish(0xbeeeeeef, (u32)s); }
+inline int print_num(int x)            { return syscallish(0x0beeeeef, x); }
+inline int yield()                     { return syscallish(0x00071e1d); }
+inline int getpid()                    { return syscallish(0x0000001d); }
 
 #ifdef __cplusplus
 }
 
 inline void print(const char *s) { print_string(s); }
+inline void print(char c)        { char x[2] { c, 0 }; print_string(x); }
 inline void print(int x)         { print_num(x); }
 
 #endif /* __cplusplus */

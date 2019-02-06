@@ -83,6 +83,15 @@ public:
     template<typename U> struct eitherify<Either<L,U>> { using type = Either<L,U>; };
     template<typename U> struct eitherify<Optional<U>> { using type = Either<L,U>; };
 
+    // Do impure stuff with the value.
+    // (ignores any return value of the given function)
+    template<typename F>
+    constexpr auto then_do(F f) -> Either& {
+
+        if (tag) f(right());
+        return *this;
+    }
+
     // Chain either-operations.
     template<typename F>
     constexpr auto then(F f)

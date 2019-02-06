@@ -19,13 +19,24 @@
 
 #include "common.hh"
 #include "task.hh"
+#include "int/handlers.hh" // XXX
 
 namespace Sched {
 
+    // How many timer ticks each task gets before they must yield.
+    constexpr inline size_t jiffies_per_slice = 1;
+
     task_t *current_task();
 
+    // Enqueue a task.
     void add_task(own_ptr<task_t> task);
-    void switch_task();
+
+    // Start running a task (used only for the first task).
+    void exec_task(own_ptr<task_t> task);
+
+    // Switch to another task if there's any ready tasks and the current's
+    // timeslice is up.
+    void maybe_switch_task(Int::interrupt_frame &frame);
 
     void init();
 }

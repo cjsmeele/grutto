@@ -32,5 +32,7 @@ inline u32  asm_cr4() { u32 x; asm volatile ("mov %%cr4, %0": "=a"(x)); return x
 inline void asm_cr3(u32 x) {   asm volatile ("mov %0, %%cr3" :: "b" (x) : "memory" ); }
 inline void asm_cr4(u32 x) {   asm volatile ("mov %0, %%cr4" :: "b" (x) : "memory" ); }
 
+inline void spin(u64 n) { for (u64 i = 0; i < n; ++i) asm volatile ("nop"); }
+
 [[noreturn]]
 inline void hang() { while (true) { asm_cli(); asm_hlt(); } }

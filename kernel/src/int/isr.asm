@@ -1,4 +1,4 @@
-;; Copyright (c) 2018, Chris Smeele
+;; Copyright (c) 2018, 2019, Chris Smeele
 ;;
 ;; This file is part of Grutto.
 ;;
@@ -25,7 +25,6 @@ extern common_interrupt_handler
 %macro DEF_EXCEPTION_HANDLER 1
 global interrupt_handler_%1
 interrupt_handler_%1:
-    cli ;; should not be necessary unless invoked manually.
     push dword 0
     push dword %1
     jmp exception_handler_shell
@@ -34,7 +33,6 @@ interrupt_handler_%1:
 %macro DEF_EXCEPTION_HANDLER_ERRORCODE 1
 global interrupt_handler_%1
 interrupt_handler_%1:
-    cli ;; should not be necessary unless invoked manually.
     push dword %1
     jmp exception_handler_shell
 %endmacro
@@ -42,7 +40,6 @@ interrupt_handler_%1:
 %macro DEF_INTERRUPT_HANDLER 1
 global interrupt_handler_%1
 interrupt_handler_%1:
-    cli
     push dword 0
     push dword %1
     jmp interrupt_handler_shell
@@ -65,8 +62,7 @@ exception_handler_shell:
     mov eax, esp
     push eax
 
-    mov eax, common_exception_handler
-    call eax
+    call common_exception_handler
 
     pop eax
     pop gs
@@ -93,8 +89,7 @@ interrupt_handler_shell:
     mov eax, esp
     push eax
 
-    mov eax, common_interrupt_handler
-    call eax
+    call common_interrupt_handler
 
     pop eax
     pop gs
