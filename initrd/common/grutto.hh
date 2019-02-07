@@ -17,34 +17,54 @@
  */
 #pragma once
 
+#include <syscalls.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //using u32 = unsigned int;
 typedef unsigned int u32;
+typedef u32 size_t;
 
 inline int syscallish(u32 a = 0,
                       u32 b = 0,
                       u32 c = 0,
-                      u32 d = 0) {
+                      u32 d = 0,
+                      u32 e = 0,
+                      u32 f = 0) {
     asm volatile (//"xchgw %%bx, %%bx\n"
                   "int $0xca\n"
                  :"+a" (a)
                  :"a"  (a),
                   "b"  (b),
                   "c"  (c),
-                  "d"  (d)
+                  "d"  (d),
+                  "S"  (e),
+                  "D"  (f)
                  :"cc",
                   "memory");
 
     return a;
 }
 
-inline int print_string(const char *s) { return syscallish(0xbeeeeeef, (u32)s); }
-inline int print_num(int x)            { return syscallish(0x0beeeeef, x); }
-inline int yield()                     { return syscallish(0x00071e1d); }
-inline int getpid()                    { return syscallish(0x0000001d); }
+inline int print_string(const char *s) { return syscallish(SYS_DBG_PRINT, (u32)s); }
+inline int print_num(int x)            { return syscallish(SYS_DBG_PRINT_NUM, x); }
+inline int yield()                     { return syscallish(SYS_YIELD); }
+inline int get_pid()                   { return syscallish(SYS_GET_PID); }
+inline int get_tid()                   { return syscallish(SYS_GET_TID); }
+inline int make_thread(void(*entry)(size_t),
+                       char  *stack,
+                       size_t stack_size,
+                       size_t context = 0) {
+    extern void threadpoline_();
+    return syscallish(SYS_THREAD_CREATE,
+                      (u32)threadpoline_,
+                      (u32)stack,
+                           stack_size,
+                      (u32)entry,
+                           context);
+}
 
 #ifdef __cplusplus
 }

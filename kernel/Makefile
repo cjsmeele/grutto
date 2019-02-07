@@ -136,6 +136,7 @@ CXXFLAGS :=                            \
 	-pipe                              \
 	-flto                              \
 	-I$(SRCDIR)                        \
+	-I../common/include                \
 	$(CXXWARNINGS)                     \
 	-DKERNEL_TARGET=\"$(TARGET)\"      \
 	-DKERNEL_TARGET_$(TARGET)          \

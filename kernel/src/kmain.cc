@@ -89,10 +89,7 @@ static void kmain() {
     // (they will find and print their own PID in a loop).
 
     load_and_enqueue_task("hello.elf");
-    load_and_enqueue_task("hello.elf");
-    load_and_enqueue_task("hello2.elf");
-    load_and_enqueue_task("hello.elf");
-    load_and_execute_task("hello.elf");
+    load_and_execute_task("hello2.elf");
 
     // (control flow does not return after exec_task)
 }

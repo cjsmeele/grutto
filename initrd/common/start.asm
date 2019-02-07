@@ -20,6 +20,7 @@
 section .text
 
 global start_
+global threadpoline_
 
 extern main
 extern CTORS_START
@@ -31,9 +32,8 @@ start_:
     call main
     ;xchg bx, bx ; magic break
 .hang:
-    ;; Nicely ask the kernel to hang.
-    ;; (this should be some sort of exit syscall)
-    mov eax, 0xffd1ed1e
+    ;; FIXME: Provide syscall definitions for asm.
+    mov eax, 7 ;; SYS_PROCESS_EXIT
     int 0xca
     jmp .hang
 
@@ -49,3 +49,16 @@ call_constructors:
     jmp .loop
 .end:
     ret
+
+;; Entrypoint for all new threads.
+threadpoline_:
+    ;; Context arg is in ebx, actual entrypoint is in eax.
+    push ebx
+    call eax
+    push eax
+.hang:
+    pop  ebx
+    push ebx
+    mov eax, 6 ;; SYS_THREAD_REJOIN
+    int 0xca
+    jmp .hang

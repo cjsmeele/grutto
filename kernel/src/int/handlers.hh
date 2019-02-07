@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, Chris Smeele
+/* Copyright (c) 2018, 2019, Chris Smeele
  *
  * This file is part of Grutto.
  *
@@ -18,18 +18,7 @@
 #pragma once
 
 #include "common.hh"
-
-namespace Int {
-
-    struct interrupt_frame {
-        u32 gs, fs, es, ds;
-        u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-        u32 int_no, err_code;
-        u32 eip, cs, eflags, useresp, ss;
-    };
-
-    extern void (*ticker)(interrupt_frame*);
-}
+#include "frame.hh"
 
 extern "C" {
 

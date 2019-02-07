@@ -26,7 +26,8 @@ struct task_t {
 
     bool started = false;
 
-    int id;
+    int pid;
+    int tid;
     Vmm::pdir_t *pdir;
     vaddr_t stack;
     vaddr_t pc;
@@ -37,6 +38,15 @@ struct task_t {
     //       kernel to be interrupted during syscalls.
     stack_word_t  kstack_[per_task_kernel_stack_words];
     stack_word_t *kstack_top = &kstack_[per_task_kernel_stack_words];
+
+    // A new thread re-uses the address space of the existing task.
+    // Threads only need their own stack and registers.
+    Either<const char*, own_ptr<task_t>>
+    make_thread(vaddr_t entry,
+                vaddr_t sp,
+                size_t stack_size,
+                size_t context1,
+                size_t context2);
 };
 
 namespace Task {

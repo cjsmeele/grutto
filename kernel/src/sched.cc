@@ -44,12 +44,18 @@ namespace Sched {
         current_task_->pc    = vaddr_t{frame.eip};
         current_task_->frame = frame;
 
+        auto current_pdir = current_task_->pdir;
+
         // XXX: This assumption is invalid for blocking syscalls
         ready_queue.enqueue(move(current_task_));
 
         auto &next = current_task_ = move(task);
 
-        Vmm::switch_pd(*next->pdir);
+        if (next->pdir != current_pdir)
+            // Prevent unnecessary TLB flushes when switching to
+            // other threads within the same process.
+            Vmm::switch_pd(*next->pdir);
+
         Gdt::set_tss_sp(next->kstack_top);
 
         if (LIKELY(next->started)) {
@@ -59,12 +65,12 @@ namespace Sched {
             frame.int_no  = int_no; // Make sure we return from the current interrupt correctly.
         } else {
             // No state to restore - create one based on the task's entrypoint.
-            frame.edi     = 0;
-            frame.ebp     = 0;
-            frame.ebx     = 0;
-            frame.edx     = 0;
-            frame.ecx     = 0;
-            frame.eax     = 0;
+            frame.edi     = next->frame.edi;
+            frame.ebp     = next->frame.ebp;
+            frame.ebx     = next->frame.ebx;
+            frame.edx     = next->frame.edx;
+            frame.ecx     = next->frame.ecx;
+            frame.eax     = next->frame.eax;
             frame.eip     = next->pc.u();
             frame.useresp = next->stack.u();
             next->started = true;

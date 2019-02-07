@@ -18,13 +18,7 @@
 #include "handlers.hh"
 #include "pic.hh"
 #include "sched.hh"
-
-struct interrupt_frame;
-
-namespace Int {
-
-    void (*ticker)(interrupt_frame*) = nullptr;
-}
+#include "../syscall.hh"
 
 static void dump_frame(OStream &o, Int::interrupt_frame &frame) {
     // This would need to be changed for amd64, of course.
@@ -113,43 +107,19 @@ extern "C" {
         panic();
     }
 
-    void int_yield_task(Int::interrupt_frame *frame) {
-
-        // End the current task's timeslice.
-
-        Sched::maybe_switch_task(*frame);
-    }
-
     void common_interrupt_handler(Int::interrupt_frame *frame) {
         Int::enabled_ = false; // Make kernel code aware that interrupts are disabled.
+
+        // FIXME: Should copy int_no so scheduler doesn't have to care to keep it intact.
 
         if (frame->int_no == 0x20) {
             ++Time::systick_counter;
             if (Time::systick_counter % Sched::jiffies_per_slice == 0)
-                int_yield_task(frame);
+                Sched::maybe_switch_task(*frame);
 
         } else if (frame->int_no == 0xca) {
             // Userspace called!
-
-            if (frame->eax == 0xbeeeeeef) {
-                // Reading and printing random strings from userspace-supplied
-                // addresses seems like a safe thing to do.
-                koi.fmt("{}", (const char*)frame->ebx);
-            } else if (frame->eax == 0xbeeeeef) {
-                koi.fmt("{}", (u32)frame->ebx);
-            } else if (frame->eax == 0x00071e1d) {
-                int_yield_task(frame);
-            } else if (frame->eax == 0x0000001d) {
-                frame->eax = Sched::current_task()->id;
-            } else if (frame->eax == 0xffd1ed1e) {
-                // Gotta have some easy way to stop spinning the CPU after
-                // we've entered user-mode.
-                koi.fmt("\nkernel: halting on user request.\n");
-                hang();
-            } else {
-                koi.fmt("got an unknown syscall request: {08x}\n", static_cast<s32>(frame->eax));
-            }
-
+            Syscall::handle(frame->eax, *frame);
         } else {
             koi(LL::warning).fmt(">>> unhandled irq {#04x}\n", frame->int_no);
         }
